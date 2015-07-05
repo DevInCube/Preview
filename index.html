@@ -158,19 +158,28 @@ function iter(n){
 		drawWorld();
 	}
 }
+
 var game_started = false;
-$(document).keyup(function(e){
-	var checkWebkitandIE = (e.which==32 ? 1 : 0);
-    var checkMoz = (e.which==32 ? 1 : 0);
-	
-    if (checkWebkitandIE || checkMoz) console.log("space pressed");
-	
+function start(){
 	if(!game_started){
 		game_started = true;
 		run();
 	} else {
 		//
 	}
+}
+
+$(document).on("tap",function(){
+   start();
+});
+
+$(document).keyup(function(e){
+	var checkWebkitandIE = (e.which==32 ? 1 : 0);
+    var checkMoz = (e.which==32 ? 1 : 0);
+	
+    if (checkWebkitandIE || checkMoz) console.log("space pressed");
+	
+	start();
 });
 </script>
 </body>
