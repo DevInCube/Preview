@@ -1,5 +1,177 @@
 <html>
-    <body>
-        <h1></h1><a href='http://devincube.github.io/Preview/'>Generations</a></h1>
-    </body>
+<head>
+	<style type="text/css">
+	body {
+		overflow:hidden;
+	}
+	</style>
+</head>
+<body>
+	<canvas id='field'>
+	</canvas>
+	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script>
+var config = "235678/3468/9";
+//4567/345
+var S = [2,3];
+var B = [2];
+var C = 8;
+var die = S;
+var revive = B;
+var states = C;
+var width = 100;
+var height = 100;
+var world = []
+var cellSize = 5;
+var interCell = 1;
+function clear(){
+	for(var i = 0; i < height; i++){
+		world[i] = []
+		for(var j = 0; j < width; j++){
+			world[i][j] = 0;
+		}
+	}
+	drawWorld();
+}
+function random(){
+	for(var i = 0; i < height; i++){
+		world[i] = []
+		for(var j = 0; j < width; j++){
+			world[i][j] = Math.floor((Math.random() * (states + 1)) + 0);
+		}
+	}
+	drawWorld();
+}
+function init(){
+	world[50][50] = states;
+	world[51][50] = states;
+	world[51][51] = states;
+	drawWorld();
+}
+		
+var c=document.getElementById("field");
+var ctx=c.getContext("2d");
+ctx.canvas.width  = window.innerWidth;
+ctx.canvas.height = window.innerHeight;
+ctx.fillStyle = "#330000";
+ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+function rgb(r,g,b){
+	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+		
+function drawCell(i,j,state){
+	var col;
+	if(state == states){
+		col = "#ffff00";
+	}else{
+		col = rgb(parseInt(255/states*state, 10),0,0);
+	}
+	ctx.fillStyle = col;
+	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
+}
+		
+function drawWorld(w){
+	for(var i = 0; i < height; i++){
+		for(var j = 0; j < width; j++){
+			drawCell(i,j,world[i][j]);
+		}
+	}
+}
+function countNeighbours(i,j,w){
+	var count = 0;
+	for(var si = -1; si <= 1; si++){
+		for(var sj = -1; sj <= 1; sj++){
+			if(si == sj && si == 0) continue;
+			var ci = i + si;
+			var cj = j + sj;
+			if((ci < 0 || ci >= height) 
+				|| (cj < 0 || cj >= width))
+				continue;
+			if(w[ci][cj] == states)
+				count++;
+		}
+	}
+	return count;
+}
+function next(){
+	var tmp = world.map(function(arr) {
+		return arr.slice();
+	});
+	for(var i = 0; i < height; i++){
+		for(var j = 0; j < width; j++){
+			var c = world[i][j];
+			if(c == 0 || c == states){
+				var count = countNeighbours(i,j,world);
+				if(c == states){
+					var dies = true;
+					for(var d = 0; d < die.length; d++){
+						if(die[d]==count){
+							dies = false;
+							break;
+						}
+					}
+					if(dies) c--;
+				}
+				if(c == 0){
+					var revives = false;
+					for(var d = 0; d < revive.length; d++){
+						if(revive[d]==count){
+							revives = true;
+							break;
+						}
+					}
+					if(revives) c = states;
+				}
+			}else{
+				c--;
+			}
+			tmp[i][j] = c;
+		}
+	}
+	world = tmp.map(function(arr) {
+		return arr.slice();
+	});
+}
+clear();
+init();
+drawWorld(world);
+var timer;
+function run(time){
+	if(!time) time = 100;
+	timer = setInterval(function(){ iter(); }, time);
+}
+function stop(){
+	clearInterval(timer);
+}
+function iter(n){
+	if(n && n > 1){
+		while(n-->=0){
+			next();
+		}
+		drawWorld();
+	} else {
+		next();
+		drawWorld();
+	}
+}
+var game_started = false;
+$(document).keyup(function(e){
+	var checkWebkitandIE = (e.which==32 ? 1 : 0);
+    var checkMoz = (e.which==32 ? 1 : 0);
+	
+    if (checkWebkitandIE || checkMoz) console.log("space pressed");
+	
+	if(!game_started){
+		game_started = true;
+		run();
+	} else {
+		//
+	}
+});
+</script>
+</body>
 </html>
