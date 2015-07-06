@@ -1,0 +1,126 @@
+<html>
+<body>
+<canvas id='field'>
+</canvas>
+<script>
+var width = 101;
+var height = 101;
+var world = []
+var cellSize = 5;
+var interCell = 1;
+var ant = [];
+var dir = 0; //left
+var stop = false;
+var border = 5;
+
+function clear(){
+	for(var i = 0; i < height; i++){
+		world[i] = []
+		for(var j = 0; j < width; j++){
+			world[i][j] = 0;
+		}
+	}
+	stop = false;
+	ant = [parseInt(height/2, 10), parseInt(width/2, 10)];
+	dir = 0;
+	drawWorld();
+}
+		
+var c=document.getElementById("field");
+var ctx=c.getContext("2d");
+ctx.canvas.width  = window.innerWidth;
+ctx.canvas.height = window.innerHeight;
+ctx.fillStyle = "#cecece";
+ctx.fillRect(0,0,border * 2 + width*(cellSize+interCell), border * 2 + height*(cellSize+interCell));
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgb(r,g,b){
+	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+		
+function drawCell(i,j,col){
+	ctx.fillStyle = col;
+	ctx.fillRect(border+j*(cellSize+interCell),border+i*(cellSize+interCell),cellSize,cellSize);
+}
+		
+function drawWorld(w){
+	if(stop) return;
+	for(var i = 0; i < height; i++){
+		for(var j = 0; j < width; j++){
+			var ter = world[i][j];
+			var col = "#ffffff";
+			if(ter == 1)
+				col = "#000000";
+			drawCell(i,j,col);
+		}
+	}
+	drawCell(ant[0], ant[1], "#ff0000");
+}
+
+function next(){
+	if(stop) return;
+	var cell = world[ant[0]][ant[1]];
+	if(cell == 0){
+		dir = (dir + 1);
+		if(dir > 3) dir = 0;
+	} else {
+		dir = (dir - 1);
+		if(dir < 0) dir = 3;
+	}
+	world[ant[0]][ant[1]] = (cell + 1)%2;
+	switch(dir){
+		case(0):{
+			ant[1] -= 1;
+			break;
+		}
+		case(1):{
+			ant[0] -= 1;
+			break;
+		}
+		case(2):{
+			ant[1] += 1;
+			break;
+		}
+		case(3):{
+			ant[0] += 1;
+			break;
+		}
+	}
+	if((ant[0] < 0 || ant[0] >= height) || (ant[1]<0 || ant[1]>=width))
+		stop = true;
+}
+
+clear();
+drawWorld(world);
+
+var timer;
+
+function run(time){
+	if(!time) time = 100;
+	timer = setInterval(function(){ iter(); }, time);
+}
+function stop(){
+	clearInterval(timer);
+}
+
+function iter(n){
+	if(n && n > 1){
+		while(n-->=0){
+			next();
+		}
+		drawWorld();
+	} else {
+		next();
+		drawWorld();
+	}
+}
+
+
+
+</script>
+</body>
+</html>
