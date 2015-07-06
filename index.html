@@ -9,7 +9,7 @@
 	}
 	#bg { position: absolute; z-index: 0; }
 	#fg { position: absolute; z-index: 1; }
-	#goFS { position: absolute; z-index: 2; }
+	#lbl, #goFS { position: absolute; z-index: 2; }
 	canvas {
 		position: absolute;
 		padding-left: 0;
@@ -26,12 +26,9 @@
 		<canvas id='bg'></canvas>
 		<canvas id='fg'></canvas>
 	</div>
+	<label id='lbl'></label>
 	<!--<button id="goFS">Go fullscreen<button>-->
 <script>
-if(typeof console === "undefined"){
-      console = {};
-}
-	
    var goFS = document.getElementById("goFS");
    if(goFS) {
 	   goFS.addEventListener("click", function() {
@@ -813,25 +810,30 @@ Game.run = (function() {
 	};
 })();
 (function() {
+	var lbl = document.getElementById("lbl");
   var onEachFrame;
   if(window.requestAnimationFrame) {
+	lbl.innerHTML = 'requestAnimationFrame';
 	onEachFrame = function(cb) {
       var _cb = function() { cb(); requestAnimationFrame(_cb); }
       _cb();
     };
-  } else  if (window.webkitRequestAnimationFrame) {
+  } else if (window.webkitRequestAnimationFrame) {
+	lbl.innerHTML = 'webkitRequestAnimationFrame';
     onEachFrame = function(cb) {
       var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
       _cb();
     };
   } else if (window.mozRequestAnimationFrame) {
+	lbl.innerHTML = 'mozRequestAnimationFrame';
     onEachFrame = function(cb) {
       var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
       _cb();
     };
   } else {
+	lbl.innerHTML = 'dedfault';
     onEachFrame = function(cb) {
-      setInterval(cb, 1000 / 60);
+      setInterval(cb, 1000 / 30);
     }
   }
   
