@@ -312,8 +312,13 @@ function clear(){
 	ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
 }
 		
-var c=document.getElementById("field");
-var ctx=c.getContext("2d");
+var c = document.getElementById("field");
+var shown_ctx = c.getContext("2d");
+shown_ctx.canvas.width  = width*(cellSize+interCell);
+shown_ctx.canvas.height = height*(cellSize+interCell);
+
+var c2 = document.createElement("canvas");
+ctx = c2.getContext("2d");
 ctx.canvas.width  = width*(cellSize+interCell);
 ctx.canvas.height = height*(cellSize+interCell);
 
@@ -497,6 +502,7 @@ Game.draw = function() {
 	drawString("" + Game.score, width/2, height/4);
 	if(game_over)
 		drawString("game over", width/2, height/2);
+	shown_ctx.drawImage(c2, 0, 0, c2.width, c2.height);
 };
 Game.init();
 Game.run = (function() {
