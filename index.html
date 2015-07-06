@@ -482,12 +482,12 @@ var Renderer = function(){
 		}
 	}
 	
-	this.pre_render = function(){
-		this.hidden_ctx.canvas.width = this.hidden_ctx.canvas.width;
+	this.pre_render = function(){	
+		this.hidden_ctx.clearRect(0, 0, this.hidden_ctx.canvas.width, this.hidden_ctx.canvas.height);
 	};
 	
 	this.post_render = function(){
-		this.ctx.canvas.width = this.ctx.canvas.width;
+		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.drawImage(this.hidden_canvas, 0, 0, viewportWidth, viewportHeight);
 	};
 }
