@@ -1,11 +1,17 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 	<style type="text/css">
 	body {
 		overflow:hidden;
 	}
+	#bg { position: absolute; z-index: 0; }
+	#fg { position: absolute; z-index: 1; }
+	#goFS { position: absolute; z-index: 2; }
 	canvas {
+		position: absolute;
 		padding-left: 0;
 		padding-right: 0;
 		margin-left: auto;
@@ -17,12 +23,95 @@
 </head>
 <body>
 	<div id="container">
-		<canvas id='field'></canvas>
+		<canvas id='bg'></canvas>
+		<canvas id='fg'></canvas>
 	</div>
-<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<!--<button id="goFS">Go fullscreen<button>-->
+<script>
+   var goFS = document.getElementById("goFS");
+   if(goFS) {
+	   goFS.addEventListener("click", function() {
+		  toggleFullScreen();
+	   }, false);
+   }
+   
+   function toggleFullScreen() {
+		var doc = window.document;
+		var docEl = doc.documentElement;
+
+		var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+		var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+		if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+			requestFullScreen.call(docEl);
+		}
+		else {
+			cancelFullScreen.call(doc);
+		}
+	}
+</script>
 <script>
 var game_started = false;
-
+var width = 100;
+var height = 150;
+var cellSize = 3;
+var interCell = 0;
+var color_transparent_opt = ' ';
+var color_opt = "#000000:0,#00660f:1,#fcfc00:2,#0ffcf0:4,#00fc00:5,#00cc00:3,#6666ff:7,#009900:9,#ff0000:r,#00ff00:g,#0000ff:b,#ffffff:w,#006606:e,#6686f0:q";
+var color_dict = {};
+var opts = color_opt.split(',');
+for(var i = 0; i < opts.length; i++){
+	var pair = opts[i].split(':');
+	color_dict[pair[1]] = pair[0];
+}
+var bg_img = 
+'                                                                                                    \n'+
+'                                                                                                 eee\n'+
+'                                                                                               eeeee\n'+
+'                                                                                             eeqeeeq\n'+
+'                                                                                             eqqqqeq\n'+
+'                               ee                                                           eeqqqqeq\n'+
+'                               eeee                                                       eeeqqqqqeq\n'+
+'                            eeeeeeee                                                      eqqqqqqqee\n'+
+'                           eeeeeeqqee                                                     eeqeqqeeee\n'+
+'                         eeeeeeeeqqqee                                                   eeeqqqqeeee\n'+
+'                       eeeeqqeeqeqqqeeeeeee                                             eeqeqqqeqeee\n'+
+'                     eeeeqqqqeeqeqqqqeeqqeeeeeeeeeee                                  eeeqqqqqqeqeee\n'+
+'                eeeeeqqqqeqqeeqqqqqqeeeqqqqqeeeeqeqe                              eeeeeeqeqqqeeeeqee\n'+
+'                eqeeqqqqqeqeeqqqqqqqeeeqqqqqqeeeeqeee          eee         eee   eeqqqqqqqqqqqeeeeee\n'+
+'               eeeqqqqqqeeqeeqqqqqqqeeeeeqqqqqeeqeqeeee       eeqee       eeeee  eqqeqqqqqqqqeeeeqee\n'+
+'            eeeeeqeqqqqeeeeeeqqqqqqqeeeeeeqqqeeqeqeqeeeee    eeeeqeee     eeqqeeeeeqeeeqeeeeeeeeeeee\n'+
+'         eeeeeeeqeqqqqeeeeeeqqqqqqqqeqqeeeqqqqqeqeqeqeeeeeeeeqeqqeqqeeee eeeqeeeeeeqeeeeeeeeeeeeqqee\n'+
+' eeeeeeeeeeqeeqqqqqqqqeqeeqqqqqqqqqqeqqeeqqqqqqqqeqeqqeqeeqqeeeqqeqqqqqeeqqqeqeeeqeeeqeeeeeeeeeeeeee\n'+
+'eeeeqeqeeqqeeqqqqqqqqeqeqeeqqqqqqqqqqeqqeqeqqqqqqqeqeeqeqeqqqeqeeqqqqqqqqqqqqeeeeqeeqeeqeeeeeeeeeeee\n'+
+'eqqqeqeqqqqeqqqqqqqqeqeqqeqqqqqqqqqqeqqqqeqqqqqqqeqeqqeqeqqqeqeqqqqqqqqqqqqqeeeeeeqeeqqeqqeeeeeeeeee\n'+
+'eqqeqeqeeqeqqqqqqqqeqeqeqqqqqqqqqqeqqeqqeeqqqqqqqqeqeeqeqeeeqeqeqqqqqqqqqqqqeqeeqeeqqeeqqeqeeeeeeeee\n'+
+'qeqqeqeqqqeeqqqqqqqqeqeqeqqqqqqqqqqeeqqqqeqqqqqqqeqeqqeqeqqqeqeqqqqqqqqqeeeqqeeqqeqeqqqqeeeeqeeeeeee\n'+
+'eqeeqqeeeeeqqqqqqqeeqeeeqqqqqqqqqqeqeeqqqqqqqqqqqqeqeeeeeeeeqeeeqqqqqqqqeeeqqeeqqqeqqeeeqeeeeeeeeeee\n'+
+'qqqqeeeeqqqqqeqqqeeeeeqqqqqqqqqqqqeqeeeqqqqqqqqqqqqqqqeeeeeeeeqqqqqqeeqeqqeeeeqqqqqqqeeeeeeeeeeqeeee\n'+
+'qqeeeqeqqqqqeqqqeeqeeqqqqqqqqqqqqqqeeeeqqqqqqqqqqqqqqqeqeeeeqqqqqqqqeqeqeeqeeeeqeqqqqqqeeeqqqeeeeeee\n'+
+'qeeeqqqqqqqqqqqeeqeeqqqqqqqqqqqqqqqeeeeqqqqqqqqqqqqqqqqqqeqqeqqqqqqqqeeeeeeeeeeeqqeqeqeqeeeqqqeqeeee\n'+
+'qeqqqqqqqqqqeeqeeeqqqqqqqqqqqqqqqqqeeeqqqqqqqqqqqqqqqqqqqeqeeqqqqqqqqeeqeeeeeeeqqqeqeqqqqeeqqqqqeeeq\n'+
+'qqqqqqqqqqqqeqqeeeeqqqqqqqqqqqqqqqqeeeeqqqqqqqqqqqqqqqqqqeeeqqqqqqqqqeeqqqqeeeeqeeeeqqqqqqqeeeqqeeqq\n'+
+'qeqqqqqqqqqeeeeqqqqqqqqqqqqqqqqqqqqeeeeeeqqqqqqqqqqqeeqqqqqqqqqqeeeqqeqqeeeeeeeeeqqeqqeqqeqqqqqeqeeq\n'+
+'qeqqqqqqqeeeeqqqqqqqqqqqqqqqqqqqqqqqeeeeqqqqqqqqqqqeqqqeeeqqqqqqeeeqeeeqqeeqeeeeeqeeqeeqqeeqeeqeeeee\n'+
+'eqqqqeqqeeqqqqqqqqeqqqqqqqqqqqqqqqqqeeeeeqqqqqqqqqeeqeqeqeqqqqqqqqeqeqeqqqqqqqqeeqeqqqeqqeqqqeqeeeee\n'+
+'qqqeeqqqqeqqeqqqqqqqqqqqqqqqqqqqqqqqeeeeqqqqqqeqqqqqqeqqqeqqqqqqqeeeqqeeeeqqeqeeeqqqqqqqqqqqqqqqeeee\n'+
+'qeeqeeqeeqeeqqqqqqeeqqqqqqqqqqqqqqqeeqeqeqqeqqqeeqqqeeqqeqqqqeqqqqeeeqqqqqqqeeqqqqqqeeqqqqeeqqqeeeee\n'+
+'eqeqeqeeqeeqeqqqqeqqqqqqqqqqqqqqqqqqqeqeqqqeqqeeeqeeqqeqqeeeqqqqqqeqqqeqeqeeeqqqqeeqeqeqqeqeeqeeeeee\n'+
+'qeqqeqeqqeqqeqqeqeqqqqqqqqqqqqqqqqeqqeqeqqeeeqqeqqeeqqeqeqeqqeqqeqeeqqeqeeeqqeqqqeqqeeeqeeqeeqeqeeee\n'+
+'eqeeqeqeeqeeqeeqeeeeqqqqqqqqqqqqqeqeeqeqqqqeeeqqeqeeeeqeeeqeeqqeqeeeeeqeqqeqeqeqqqeqeqqeqqeeqeeqqqqq\n'+
+'eeqeeqqqqeeeeqeeeeqeqqqqqqqqqqqqqqqqeeqeqqqqqeqeeeqeeeeeeeeeeqeeeeeeeqqqeqqeqeeqeqqeeeeqeqeeeqqqqeqq\n'+
+'eqeeeeqeeeeeeeeeeqeeeqeeqqqqqqqqqqqqqqqqqqqqqeeeeqeeeeeeeeeeeqeeeeeqqeeeqeeqqeeeeeeqeeeeqqeqqeqeqqee\n'+
+'eeqqeeeqeeeeeeeeeeeeeeeeqqqqqqqqqeqeeqeeqqqeeeeeeeqeeeeeeeeeeeeeeeeeeeqeqqqqqqeeeeqqqeeeeeeqeqeqeqqe\n'+
+'eeqeqqeqqeeeeeeeeeeeeeqqqqqqqqqeeqqqqqeqqqeeeeeeeeqeeeeeeeeeeeeeeeeqqqqqeeeeqqeeeeqeeeeeeeeeeeeeeqeq\n'+
+'eeqqeqeqqeqqeeeeeeeeqqqqqqqeqqqeqeqeeqeqeqeeeeeeeqeeeeeeeeeeeeeeeqqqqqqqeeqeeeeeqqeeeeeqeeeqeeeqeeqq\n'+
+'eeqeqeqeeqeeeeeeeeeeqeqeeqqeeqeqeeeeqeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeqqeqeqeeeeeeeeeeeeeeqeeeeeeqeqq\n'+
+'eeeqeqeeeeeeeeeeeeeqeqqqqqqeqeqeeqqqeeeeeqeeeeeeeeeeeeeeeeeeeeeeqeeqqqqeqeeeeeeeeeeeeeeeeeeeeeeeqqeq\n'+
+'eeeqqeeqqqeeeeeeeeeeqqeeeeeqqqqeeeeqeeeeeqeqeeeeeeeeeeeeeeeeeeeeeqqqeeqeeeqeeeeeeqeeeeeeeeeeeeeeqeeq\n'+
+'eeeeqqqeqeeeeeeeeeeqqqeeeeeqqqqqqeqqeeeeeeeeeeeqeeeeeeeeeeeeeeeeeqqqqeeeeeeeeeeeeeeeeeeeeeeeeeqeeqeq\n'+
+'eeeqeqeeqeeeeeeeeeeqqqeeeeeqqqqqqqeqqeeeeeeeeeeeeeeeeeeeeeeeeeqqqeeqqeeeeeeeeeeeeeqeeeeeeeeeeeqqqeqq\n'+
+'eeeeeeeeeeeeeeeeeeqqqeeeeeeqqqqqqqqqqqeeeeeeeeeeeeeeeeeeeeeeeeeeeeeqeeqqeeeeeeeeeeeeeeeeeeeeqeeeeqqe';
 var undef_char_img = '\n'+
 'wwwwwwwwww\n'+
 'w        w\n'+
@@ -34,7 +123,6 @@ var undef_char_img = '\n'+
 'w        w\n'+
 'w        w\n'+
 'wwwwwwwwww\n';
-
 var ball_img = 
 "     0000000     \n"+
 "   00wwwwwww00   \n"+
@@ -45,13 +133,24 @@ var ball_img =
 "0wwwwwwwwwwwwwww0\n"+
 " 0ww0wwwwwwwwww0 \n"+
 "  00 0000000000  ";
+var grass_img = 
+'                    \n'+
+'00          0       \n'+
+'050    00  090    0 \n'+
+' 050  050  0590  00 \n'+
+' 0500 0590  090  0  \n'+
+' 0590 0595000590090 \n'+
+' 0590095999095905990\n'+
+'09599959959995999590\n'+
+'95999999995959995999\n'+
+'99999599999999999999\n'+
+'00000000000000000000';
 var pipe_img = "03gwggggg33g3339390";
 var pipe2_img = 	"03gwgggggg33g33339390";
 var pipe_edge_img = "000000000000000000000";
-
 function readImg(str){
 	var arr = [[]];
-	for(var i = 0; i < str.length; i++){		
+	for(var i = 0; i < str.length; i++){
 		var ch = str[i];
 		if(ch == '\n'){ 
 			if(arr[arr.length - 1].length > 0)
@@ -69,18 +168,25 @@ function readImg(str){
 		arr.pop(arr[arr.length - 1]);
 	return arr;
 }
-
+function createCanvas(str){
+	var data = readImg(str);
+	var canvas = document.createElement('canvas');
+	canvas.width = data[0].length * (cellSize + interCell);
+	canvas.height = data.length * (cellSize + interCell);
+	drawOn(canvas.getContext('2d'), data, 0, 0);
+	return canvas;
+}
 var char_images = [];
-
 function setFontChar(ch, repr){
-	char_images[ch.charCodeAt(0)] = readImg(repr);
+	var code = ch.charCodeAt(0);
+	char_images[code] = createCanvas(repr);
 }
 setFontChar('0',
 ' wwwwwww \n'+
 'www   www\n'+
-'www   www\n'+
-'wwwwwwwww\n'+
-'www   www\n'+
+'www  wwww\n'+
+'www w www\n'+
+'wwww  www\n'+
 'www   www\n'+
 'www   www\n'+
 ' wwwwwww ');
@@ -244,77 +350,81 @@ setFontChar('g',
 'www  www\n'+
 ' wwwwwww\n'
 );
-var undef_char = readImg(undef_char_img);
+setFontChar('x',
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+' www www \n'+
+' wwwwwww \n'+
+' www www \n'+
+'www   www\n'+
+'www   www\n'+
+'www   www');
+setFontChar('s',
+' wwwwwwww\n'+
+'wwwwwwwww\n'+
+'www      \n'+
+'wwww     \n'+
+' wwwwwww \n'+
+'     wwww\n'+
+'      www\n'+
+'wwwwwwwww\n'+
+'wwwwwwww ');
+setFontChar('t',
+'wwwwwwwww\n'+
+'wwwwwwwww\n'+
+'   www   \n'+
+'   www   \n'+
+'   www   \n'+
+'   www   \n'+
+'   www   \n'+
+'   www   \n'+
+'   www   ');
+setFontChar('c',
+' wwwwwww\n'+
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwwwww\n'+
+' wwwwwww');
+setFontChar(':',
+'www\n'+
+'www\n'+
+'www\n'+
+'   \n'+
+'   \n'+
+'   \n'+
+'www\n'+
+'www\n'+
+'www');
 
-var ball = readImg(ball_img);
-var pipe = readImg(pipe_img);
-var pipe2 = readImg(pipe2_img);
-var pipeEdge = readImg(pipe_edge_img);
-
-var width = 100;
-var height = 150;
-var cellSize = 3;
-var interCell = 0;
-var color_transparent_opt = ' ';
-var color_opt = "#000000:0,#00660f:1,#fcfc00:2,#0ffcf0:4,#00fc00:5,#00cc00:3,#6666ff:7,#009900:9,#ff0000:r,#00ff00:g,#0000ff:b,#ffffff:w";
-var color_dict = {};
-
-var opts = color_opt.split(',');
-for(var i = 0; i < opts.length; i++){
-	var pair = opts[i].split(':');
-	color_dict[pair[1]] = pair[0];
-}
-
-function drawCell2(i, j, colChar){
+var undef_char = createCanvas(undef_char_img);
+function drawCellOn(ctx, i, j, colChar){
 	if(i<0 || i>=height) return;
-	if(j<0 || j>=width-1) return;
-	if(colChar == color_transparent_opt) return;		
+	if(j<0 || j>=width) return;
+	if(colChar == color_transparent_opt) return;
 	ctx.fillStyle = color_dict[colChar];
 	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
 }
-function draw(obj, x, y){
+function drawOn(ctx, obj, x, y){
 	for(var i = 0; i < obj.length; i++){
 		for(var j = 0; j < obj[0].length; j++){
 			var col = obj[i][j];
-			drawCell2(y + i, x + j, col);
+			drawCellOn(ctx, y + i, x + j, col);
 		}
 	}
 }
-
-function drawString(string, cx, cy){
-	var chars = string.toLowerCase().split("");
-	var list = [];
-	var interCharSpace = 1;
-	var strWidth = (chars.length-1)*interCharSpace;		
-	for(var i = 0; i < chars.length; i++){
-		var index = chars[i].charCodeAt(0);
-	    var achar;
-		if(char_images[index])
-			achar = char_images[index];
-		else
-			achar = undef_char;
-		list.push(achar);
-		strWidth += achar[0].length;
-	}
-	var strHeight = list[0].length;
-	var x = cx - strWidth / 2;
-	var y = cy - strHeight / 2;
-	for(var i = 0; i < list.length; i++){
-		var achar = list[i];
-		draw(achar, x, y);
-		x += achar[0].length + interCharSpace;
-	}
-}
-
-function clear(){
-	ctx.fillStyle = "#335cff";
-	ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
-}
-		
-var c=document.getElementById("field");
-var ctx=c.getContext("2d");
-ctx.canvas.width  = width*(cellSize+interCell);
-ctx.canvas.height = height*(cellSize+interCell);
+var canvas_bg = document.getElementById("bg");
+var ctx_bg = canvas_bg.getContext('2d');
+ctx_bg.canvas.width  = width*(cellSize+interCell);
+ctx_bg.canvas.height = height*(cellSize+interCell);
+ctx_bg.fillStyle = "#335cff";
+ctx_bg.fillRect(0, 0, width*(cellSize+interCell), height*(cellSize+interCell));
+var bg_image = readImg(bg_img);
+drawOn(ctx_bg, bg_image, 0, height - bg_image.length);
 
 function componentToHex(c) {
     var hex = c.toString(16);
@@ -324,10 +434,97 @@ function rgb(r,g,b){
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 //=====================================================
+var Renderer = function(){
+	var viewportWidth = width * (cellSize + interCell);
+	var viewportHeight = height * (cellSize + interCell);
+	
+	this.canvas = document.getElementById("fg");
+	this.ctx = this.canvas.getContext("2d");
+	this.canvas.width  = viewportWidth;
+	this.canvas.height = viewportHeight;
+	
+	this.hidden_canvas = document.createElement("canvas");
+	this.hidden_ctx = this.hidden_canvas.getContext("2d");
+	this.hidden_canvas.width  = viewportWidth;
+	this.hidden_canvas.height = viewportHeight;
+	
+	this.render = function(canvas, px, py) {
+		this.hidden_ctx.drawImage(canvas, 
+			px * (cellSize + interCell), 
+			py * (cellSize + interCell), 
+			canvas.width, 
+			canvas.height);
+	};
+	
+	this.renderString = function(string, cx, cy){
+		var chars = string.toLowerCase().split("");
+		var list = [];
+		var interCharSpace = 1;
+		var strWidth = (chars.length - 1) * interCharSpace;
+		for(var i = 0; i < chars.length; i++){
+			var index = chars[i].charCodeAt(0);
+			var achar;
+			if(char_images[index])
+				achar = char_images[index];
+			else
+				achar = undef_char;
+			list.push(achar);
+			strWidth += achar.width / (cellSize + interCell);
+		}
+		var strHeight = list[0].height;
+		var x = cx - strWidth / 2;
+		var y = cy - strHeight / 2;
+		for(var i = 0; i < list.length; i++){
+			var achar = list[i];
+			var charH = 0;
+			this.render(achar, Math.round(x),  Math.round(y - charH));
+			x += achar.width / (cellSize + interCell) + interCharSpace;
+		}
+	}
+	
+	this.pre_render = function(){
+		this.hidden_ctx.canvas.width = this.hidden_ctx.canvas.width;
+	};
+	
+	this.post_render = function(){
+		this.ctx.canvas.width = this.ctx.canvas.width;
+		this.ctx.drawImage(this.hidden_canvas, 0, 0, viewportWidth, viewportHeight);
+	};
+}
+var renderer = new Renderer();
+//-----------------------------------------------------
+var ContentManager = function(){
+
+	//this.beepAudio = new Audio("data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");  
+	this.canvases = {};
+	
+	this.addCanvas = function(name, str) {
+		var imgData = readImg(str);
+		var new_canvas = document.createElement("canvas");
+		var ctx = new_canvas.getContext("2d");
+		new_canvas.width  = imgData[0].length * (cellSize + interCell);
+		new_canvas.height = imgData.length * (cellSize + interCell);
+		drawOn(ctx, imgData, 0, 0);
+		this.canvases[name] = new_canvas;
+	};
+	
+	this.addCanvas('hero', ball_img);
+	this.addCanvas('grass', grass_img);
+	
+	this.getCanvas = function(name){
+		return this.canvases[name];
+	}
+};
+var resources = new ContentManager();
+//=====================================================
+// MODELS
+//=====================================================
 var Ball = function(){
-	this.image = ball;
-	this.width = this.image[0].length;
-	this.height = this.image.length;
+	this.canvas = resources.getCanvas('hero');
+	this.ctx = this.canvas.getContext("2d");
+	
+	this.width = this.canvas.width / (cellSize + interCell);
+	this.height = this.canvas.height / (cellSize + interCell);
 	this.X = 0;
 	this.Y = 0;
 	this.velocityX = 0;
@@ -345,20 +542,46 @@ var Ball = function(){
 		}
 		this.X += this.velocityX * dt;
 		this.Y += this.velocityY * dt;
-	};
+	};	
 	this.draw = function(){
-		draw(this.image, this.X, this.Y);
+		renderer.render(this.canvas, this.X, this.Y);
 	};
 	this.pushUp = function(){
 		this.velocityY = - 9.8 * 8;
+		//Game.resources.beepAudio.play();
+	};
+};
+//----------------------
+var Grass = function(){
+	this.canvas = resources.getCanvas('grass');
+	this.ctx = this.canvas.getContext("2d");
+	
+	this.width = this.canvas.width / (cellSize + interCell);
+	this.height = this.canvas.height / (cellSize + interCell);
+	this.X = 0;
+	this.Y = 0;
+	this.velocityX = -30;
+	this.velocityY = 0;
+	
+	this.place = function(x, y){
+		this.X = x;
+		this.Y = y;
+	};
+	this.update = function(dt){
+		if(this.X + this.width <= 0) return;
+		this.X += this.velocityX * dt;
+		this.Y += this.velocityY * dt;
+	};	
+	this.draw = function(){
+		renderer.render(this.canvas, this.X, this.Y);
 	};
 };
 //----------------------
 var Pipe = function(){
-	this.image = pipe;
-	this.image2 = pipe2;
-	this.image3 = pipeEdge;
-	this.width = this.image[0].length;
+	this.image = readImg(pipe_img);
+	this.image2 = readImg(pipe2_img);
+	this.image3 = readImg(pipe_edge_img);
+	this.width = this.image3[0].length;
 	this.hole = 30;
 	this.pre_hole = 10;
 	this.posY = Math.floor((Math.random() * (height - this.hole - 5)) + 5);
@@ -367,36 +590,49 @@ var Pipe = function(){
 	this.destroy = false;
 	this.pass = false;
 	
-	this.draw = function(){		
+	this.canvas = document.createElement("canvas");
+	this.ctx = this.canvas.getContext("2d");
+	this.ctx.canvas.width  = this.width * (cellSize + interCell);
+	this.ctx.canvas.height = height * (cellSize+interCell);
+	
+	this.preDraw = function(){
+		var x = 0;
 		var preY = this.posY - this.pre_hole;
 		if (preY < 0) 
 			preY = 0;
 		else 
-			draw(this.image3, this.X - 1, preY);
+			drawOn(this.ctx, this.image3, x, preY);
 		for(var i = 0; i < preY; i++){
-			draw(this.image, this.X, i);
+			drawOn(this.ctx, this.image, x + 1, i);
 		}
 		for(var i = preY + 1; i < this.posY; i++){
-			draw(this.image2, this.X - 1, i);
+			drawOn(this.ctx, this.image2, x, i);
 		}
-		draw(this.image3, this.X - 1, this.posY);
+		drawOn(this.ctx, this.image3, x, this.posY);
 		var preY2 = this.posY + this.hole;
 		var preY3 = preY2 + this.pre_hole;
-		draw(this.image3, this.X - 1, preY2);
+		drawOn(this.ctx, this.image3, x, preY2);
 		for(var i = preY2 + 1; i < preY3 && i < height; i++){
-			draw(this.image2, this.X - 1, i);
+			drawOn(this.ctx, this.image2, x, i);
 		}
 		if(preY3 < height)
-			draw(this.image3, this.X - 1, preY3);
+			drawOn(this.ctx, this.image3, x, preY3);
 		for(var i = preY3 + 1; i < height; i++){
-			draw(this.image, this.X, i);
+			drawOn(this.ctx, this.image, x + 1, i);
 		}
+	};
+	
+	this.preDraw();
+	
+	this.draw = function(){		
+		renderer.render(this.canvas, this.X, 0);		
 	};
 	
 	this.update = function(dt){
 		this.X += this.velocityX * dt;
 		if(this.X + this.width < 0){
 			this.destroy = true;
+			delete this.canvas;
 		}
 	};
 	
@@ -433,12 +669,10 @@ function onSpacebarPush(){
 	}	
 	Game.ball.pushUp();
 }
-
 $(document).on("tap",function(){
    onSpacebarPush();
 });
 $(document).keyup(function(e){
-
 	var checkWebkitandIE = (e.keyCode==32 ? 1 : 0);
     var checkMoz = (e.keyCode==32 ? 1 : 0);
 	
@@ -452,20 +686,41 @@ var Game = {};
 Game.init = function() {
 	Game.fps = 30;
 	Game.score = 0;
+	Game.max_score = 0;
 	Game.ball = new Ball();
-	Game.ball.place(30, height / 2);
+	Game.ball.place(25, height / 2);
 	Game.pipes = [];
-	// @todo grass
+	Game.grass = [];
+	Game.resources = resources;
+	
+	var gr_canvas = Game.resources.getCanvas('grass');
+	var gr_width = gr_canvas.width / (cellSize + interCell);
+	var gr_height = gr_canvas.height / (cellSize + interCell);
+	
+	for(x = 0; x < width; x+= gr_width){
+		var gr = new Grass();
+		gr.place(x, height - gr_height);
+		Game.grass.push(gr);
+	}
+
 	Game.counter = 0;
 };
 Game.update = function() {
-	if(game_over) return;
 	var dt = Game.fps/1000;
 	Game.ball.update(dt);
+	
 	if(Game.ball.Y + Game.ball.height >= height){
 		Game.ball.Y = height - Game.ball.height;
-		game_over = true;
+		if(!game_over) {
+			game_over = true;
+			if(Game.score > Game.max_score)
+				Game.max_score = Game.score;
+		}
 	}
+	
+	if(game_over) return;
+	
+	
 	for(var i =0; i < Game.pipes.length; i++){
 		var pipe = Game.pipes[i];
 		if(!pipe.destroy)
@@ -477,6 +732,18 @@ Game.update = function() {
 			Game.score++;
 		}
 	}
+	for(var i = 0; i < Game.grass.length; i++){
+		var gr = Game.grass[i];
+		gr.update(dt);
+	}
+	var lastGrass = Game.grass[Game.grass.length - 1];
+	if(lastGrass) {
+		if(lastGrass.X + lastGrass.width < width){
+			var new_gr = new Grass();
+			new_gr.place(lastGrass.X + lastGrass.width + 1, height - lastGrass.height);
+			Game.grass.push(new_gr);
+		}
+	}
 	if(game_started){
 		Game.counter += dt;
 		if(Game.counter > 2.5){
@@ -486,16 +753,38 @@ Game.update = function() {
 	}
 };
 Game.draw = function() {
-	clear();
+	var t_start = Date.now();
+	
+	renderer.pre_render();
+	
 	for(var i =0; i < Game.pipes.length; i++){
 		var pipe = Game.pipes[i];
-		pipe.draw();
+		if(!pipe.destroy)
+			pipe.draw();
 	}
 	
 	Game.ball.draw();
-	drawString("" + Game.score, width/2, height/4);
-	if(game_over)
-		drawString("game over", width/2, height/2);
+	if(game_over) {
+		renderer.renderString("score: " + Game.score, width/2, height/4);
+		renderer.renderString("max: " + Game.max_score, width/2, height/3);
+		renderer.renderString("game over", width/2, height/2);
+	}
+	if(!game_started) {
+		renderer.renderString("start", width/2, height/2);
+	} else {
+		if(!game_over) 
+			renderer.renderString("" + Game.score, width/2, height/4);
+	}
+		
+	for(var i = 0; i < Game.grass.length; i++){
+		var gr = Game.grass[i];
+		gr.draw();
+	}
+	
+	renderer.post_render();
+	
+	var t_end = Date.now();
+	//console.log((t_end-t_start)+"ms");
 };
 Game.init();
 Game.run = (function() {
