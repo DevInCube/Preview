@@ -1,5 +1,8 @@
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 	<style type="text/css">
 	body {
 		overflow:hidden;
@@ -9,7 +12,6 @@
 <body>
 	<canvas id='field'>
 	</canvas>
-	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script>
 var config = "235678/3468/9";
 //4567/345
@@ -24,7 +26,6 @@ var height = 100;
 var world = []
 var cellSize = 5;
 var interCell = 1;
-
 function clear(){
 	for(var i = 0; i < height; i++){
 		world[i] = []
@@ -34,7 +35,6 @@ function clear(){
 	}
 	drawWorld();
 }
-
 function random(){
 	for(var i = 0; i < height; i++){
 		world[i] = []
@@ -44,7 +44,6 @@ function random(){
 	}
 	drawWorld();
 }
-
 function init(){
 	world[50][50] = states;
 	world[51][50] = states;
@@ -58,12 +57,10 @@ ctx.canvas.width  = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
 ctx.fillStyle = "#330000";
 ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
-
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
 }
-
 function rgb(r,g,b){
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
@@ -86,7 +83,6 @@ function drawWorld(w){
 		}
 	}
 }
-
 function countNeighbours(i,j,w){
 	var count = 0;
 	for(var si = -1; si <= 1; si++){
@@ -103,7 +99,6 @@ function countNeighbours(i,j,w){
 	}
 	return count;
 }
-
 function next(){
 	var tmp = world.map(function(arr) {
 		return arr.slice();
@@ -143,13 +138,10 @@ function next(){
 		return arr.slice();
 	});
 }
-
 clear();
 init();
 drawWorld(world);
-
 var timer;
-
 function run(time){
 	if(!time) time = 100;
 	timer = setInterval(function(){ iter(); }, time);
@@ -157,7 +149,6 @@ function run(time){
 function stop(){
 	clearInterval(timer);
 }
-
 function iter(n){
 	if(n && n > 1){
 		while(n-->=0){
@@ -171,20 +162,27 @@ function iter(n){
 }
 
 var game_started = false;
-$(document).keyup(function(e){
-	var checkWebkitandIE = (e.which==32 ? 1 : 0);
-    var checkMoz = (e.which==32 ? 1 : 0);
-	
-    if (checkWebkitandIE || checkMoz) console.log("space pressed");
-	
+function start(){
 	if(!game_started){
 		game_started = true;
 		run();
 	} else {
 		//
 	}
+}
+
+$(document).on("tap",function(){
+   start();
 });
 
+$(document).keyup(function(e){
+	var checkWebkitandIE = (e.which==32 ? 1 : 0);
+    var checkMoz = (e.which==32 ? 1 : 0);
+	
+    if (checkWebkitandIE || checkMoz) console.log("space pressed");
+	
+	start();
+});
 </script>
 </body>
 </html>
