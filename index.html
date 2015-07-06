@@ -7,7 +7,10 @@
 	body {
 		overflow:hidden;
 	}
+	#bg { position: absolute; z-index: 0; }
+	#fg { position: absolute; z-index: 1; }
 	canvas {
+		position: absolute;
 		padding-left: 0;
 		padding-right: 0;
 		margin-left: auto;
@@ -19,7 +22,8 @@
 </head>
 <body>
 	<div id="container">
-		<canvas id='field'></canvas>
+		<canvas id='bg'></canvas>
+		<canvas id='fg'></canvas>
 	</div>
 <script>
 var game_started = false;
@@ -282,6 +286,22 @@ function draw(obj, x, y){
 	}
 }
 
+function drawCellOn(ctx, i, j, colChar){
+	if(i<0 || i>=height) return;
+	if(j<0 || j>=width-1) return;
+	if(colChar == color_transparent_opt) return;		
+	ctx.fillStyle = color_dict[colChar];
+	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
+}
+function drawOn(ctx, obj, x, y){
+	for(var i = 0; i < obj.length; i++){
+		for(var j = 0; j < obj[0].length; j++){
+			var col = obj[i][j];
+			drawCellOn(ctx, y + i, x + j, col);
+		}
+	}
+}
+
 function drawString(string, cx, cy){
 	var chars = string.toLowerCase().split("");
 	var list = [];
@@ -308,20 +328,26 @@ function drawString(string, cx, cy){
 }
 
 function clear(){
-	ctx.fillStyle = "#335cff";
-	ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
+	ctx.canvas.width = ctx.canvas.width;
 }
-		
-var c = document.getElementById("field");
-var shown_ctx = c.getContext("2d");
-shown_ctx.canvas.width  = width*(cellSize+interCell);
-shown_ctx.canvas.height = height*(cellSize+interCell);
 
+var canvas_bg = document.getElementById("bg");
+var ctx_bg = canvas_bg.getContext('2d');
+ctx_bg.canvas.width  = width*(cellSize+interCell);
+ctx_bg.canvas.height = height*(cellSize+interCell);
+ctx_bg.fillStyle = "#335cff";
+ctx_bg.fillRect(0, 0, width*(cellSize+interCell), height*(cellSize+interCell));
+		
+var c = document.getElementById("fg");
+var ctx = c.getContext("2d");
+ctx.canvas.width  = width*(cellSize+interCell);
+ctx.canvas.height = height*(cellSize+interCell);
+/*
 var c2 = document.createElement("canvas");
 ctx = c2.getContext("2d");
 ctx.canvas.width  = width*(cellSize+interCell);
 ctx.canvas.height = height*(cellSize+interCell);
-
+*/
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -329,6 +355,8 @@ function componentToHex(c) {
 function rgb(r,g,b){
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
+//=====================================================
+// MODELS
 //=====================================================
 var Ball = function(){
 	this.image = ball;
@@ -339,6 +367,12 @@ var Ball = function(){
 	this.velocityX = 0;
 	this.velocityY = 0;
 	this.acc = 1.00;
+	
+	this.canvas = document.createElement("canvas");
+	this.ctx = this.canvas.getContext("2d");
+	this.ctx.canvas.width  = this.width * (cellSize + interCell);
+	this.ctx.canvas.height = this.height * (cellSize + interCell);
+	drawOn(this.ctx, this.image, 0, 0);
 	
 	this.place = function(x, y){
 		this.X = x;
@@ -351,9 +385,9 @@ var Ball = function(){
 		}
 		this.X += this.velocityX * dt;
 		this.Y += this.velocityY * dt;
-	};
+	};	
 	this.draw = function(){
-		draw(this.image, this.X, this.Y);
+		ctx.drawImage(this.canvas, this.X * (cellSize + interCell), this.Y * (cellSize + interCell), this.canvas.width, this.canvas.height);	
 	};
 	this.pushUp = function(){
 		this.velocityY = - 9.8 * 8;
@@ -364,7 +398,7 @@ var Pipe = function(){
 	this.image = pipe;
 	this.image2 = pipe2;
 	this.image3 = pipeEdge;
-	this.width = this.image[0].length;
+	this.width = this.image3[0].length;
 	this.hole = 30;
 	this.pre_hole = 10;
 	this.posY = Math.floor((Math.random() * (height - this.hole - 5)) + 5);
@@ -373,30 +407,42 @@ var Pipe = function(){
 	this.destroy = false;
 	this.pass = false;
 	
-	this.draw = function(){		
+	this.canvas = document.createElement("canvas");
+	this.ctx = this.canvas.getContext("2d");
+	this.ctx.canvas.width  = this.width * (cellSize + interCell);
+	this.ctx.canvas.height = height * (cellSize+interCell);
+	
+	this.preDraw = function(){
+		var x = 0;
 		var preY = this.posY - this.pre_hole;
 		if (preY < 0) 
 			preY = 0;
 		else 
-			draw(this.image3, this.X - 1, preY);
+			drawOn(this.ctx, this.image3, x, preY);
 		for(var i = 0; i < preY; i++){
-			draw(this.image, this.X, i);
+			drawOn(this.ctx, this.image, x + 1, i);
 		}
 		for(var i = preY + 1; i < this.posY; i++){
-			draw(this.image2, this.X - 1, i);
+			drawOn(this.ctx, this.image2, x, i);
 		}
-		draw(this.image3, this.X - 1, this.posY);
+		drawOn(this.ctx, this.image3, x, this.posY);
 		var preY2 = this.posY + this.hole;
 		var preY3 = preY2 + this.pre_hole;
-		draw(this.image3, this.X - 1, preY2);
+		drawOn(this.ctx, this.image3, x, preY2);
 		for(var i = preY2 + 1; i < preY3 && i < height; i++){
-			draw(this.image2, this.X - 1, i);
+			drawOn(this.ctx, this.image2, x, i);
 		}
 		if(preY3 < height)
-			draw(this.image3, this.X - 1, preY3);
+			drawOn(this.ctx, this.image3, x, preY3);
 		for(var i = preY3 + 1; i < height; i++){
-			draw(this.image, this.X, i);
+			drawOn(this.ctx, this.image, x + 1, i);
 		}
+	};
+	
+	this.preDraw();
+	
+	this.draw = function(){		
+		ctx.drawImage(this.canvas, this.X * (cellSize + interCell), 0, this.canvas.width, this.canvas.height);		
 	};
 	
 	this.update = function(dt){
@@ -492,17 +538,23 @@ Game.update = function() {
 	}
 };
 Game.draw = function() {
+	var t_start = Date.now();
 	clear();
 	for(var i =0; i < Game.pipes.length; i++){
 		var pipe = Game.pipes[i];
-		pipe.draw();
+		if(!pipe.destroy)
+			pipe.draw();
 	}
 	
 	Game.ball.draw();
 	drawString("" + Game.score, width/2, height/4);
 	if(game_over)
 		drawString("game over", width/2, height/2);
-	shown_ctx.drawImage(c2, 0, 0, c2.width, c2.height);
+	
+	//shown_ctx.drawImage(c2, 0, 0, c2.width, c2.height);	
+	
+	var t_end = Date.now();
+	console.log((t_end-t_start)+"ms");
 };
 Game.init();
 Game.run = (function() {
