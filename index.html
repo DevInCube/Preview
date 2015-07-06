@@ -1,1 +1,541 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+	body {
+		overflow:hidden;
+	}
+	canvas {
+		padding-left: 0;
+		padding-right: 0;
+		margin-left: auto;
+		margin-right: auto;
+		display: block;
+		height: 100%;
+	}
+	</style>
+</head>
+<body>
+	<div id="container">
+		<canvas id='field'></canvas>
+	</div>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script>
+var game_started = false;
 
+var undef_char_img = '\n'+
+'wwwwwwwwww\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'wwwwwwwwww\n';
+
+var ball_img = 
+"     0000000     \n"+
+"   00wwwwwww00   \n"+
+"  0wwwwwwwwwww0  \n"+
+" 0wwwww07www07w0 \n"+
+"07777ww00www00ww0\n"+
+"0ww777wwww0wwwww0\n"+
+"0wwwwwwwwwwwwwww0\n"+
+" 0ww0wwwwwwwwww0 \n"+
+"  00 0000000000  ";
+var pipe_img = "03gwggggg33g3339390";
+var pipe2_img = 	"03gwgggggg33g33339390";
+var pipe_edge_img = "000000000000000000000";
+
+function readImg(str){
+	var arr = [[]];
+	for(var i = 0; i < str.length; i++){		
+		var ch = str[i];
+		if(ch == '\n'){ 
+			if(arr[arr.length - 1].length > 0)
+				arr.push([]);
+		}
+		else if(ch == '\r'){
+			continue;
+		}
+		else {
+			var line = arr[arr.length - 1];
+			line.push(ch);
+		}
+	}
+	if(arr[arr.length - 1].length == 0)
+		arr.pop(arr[arr.length - 1]);
+	return arr;
+}
+
+var char_images = [];
+
+function setFontChar(ch, repr){
+	char_images[ch.charCodeAt(0)] = readImg(repr);
+}
+setFontChar('0',
+' wwwwwww \n'+
+'www   www\n'+
+'www   www\n'+
+'wwwwwwwww\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+' wwwwwww ');
+setFontChar('1',
+'www \n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www');
+setFontChar('2',
+'wwwwwww \n'+
+'     www\n'+
+'     www\n'+
+' wwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwwwww');
+setFontChar('3',
+'wwwwwww \n'+
+'     www\n'+
+'     www\n'+
+'  wwwww \n'+
+'     ww \n'+
+'     www\n'+
+'     www\n'+
+'wwwwwww ');
+setFontChar('4',
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+'wwwwwwww\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www');
+setFontChar('5',
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+' wwwwww \n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'wwwwwww ');
+setFontChar('6',
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'wwwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwww ');
+setFontChar('7',
+'wwwwwww \n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www');
+setFontChar('8',
+' wwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwww \n'+
+' ww  ww \n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwww ');
+setFontChar('9',
+' wwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+'wwwwwwww\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'wwwwwww ');
+setFontChar(' ', 
+'     ');
+setFontChar('a', 
+' wwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+'wwwwwwww\n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'
+);
+setFontChar('e', 
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwww  \n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwwwww\n'
+);
+setFontChar('m', 
+'wwwwwwwwwwwww \n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'
+);
+setFontChar('o', 
+' wwwwwww \n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+' wwwwwww \n'
+);
+setFontChar('r', 
+'wwwwwwww \n'+
+'www   www\n'+
+'www   www\n'+
+'www   ww \n'+
+'wwwwwwww \n'+
+'www   ww \n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'
+);
+setFontChar('v', 
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'wwwwwwww \n'
+);
+setFontChar('g', 
+' wwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'www wwww\n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwwww\n'
+);
+var undef_char = readImg(undef_char_img);
+
+var ball = readImg(ball_img);
+var pipe = readImg(pipe_img);
+var pipe2 = readImg(pipe2_img);
+var pipeEdge = readImg(pipe_edge_img);
+
+var width = 100;
+var height = 150;
+var cellSize = 3;
+var interCell = 0;
+var color_transparent_opt = ' ';
+var color_opt = "#000000:0,#00660f:1,#fcfc00:2,#0ffcf0:4,#00fc00:5,#00cc00:3,#6666ff:7,#009900:9,#ff0000:r,#00ff00:g,#0000ff:b,#ffffff:w";
+var color_dict = {};
+
+var opts = color_opt.split(',');
+for(var i = 0; i < opts.length; i++){
+	var pair = opts[i].split(':');
+	color_dict[pair[1]] = pair[0];
+}
+
+function drawCell2(i, j, colChar){
+	if(i<0 || i>=height) return;
+	if(j<0 || j>=width-1) return;
+	if(colChar == color_transparent_opt) return;		
+	ctx.fillStyle = color_dict[colChar];
+	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
+}
+function draw(obj, x, y){
+	for(var i = 0; i < obj.length; i++){
+		for(var j = 0; j < obj[0].length; j++){
+			var col = obj[i][j];
+			drawCell2(y + i, x + j, col);
+		}
+	}
+}
+
+function drawString(string, cx, cy){
+	var chars = string.toLowerCase().split("");
+	var list = [];
+	var interCharSpace = 1;
+	var strWidth = (chars.length-1)*interCharSpace;		
+	for(var i = 0; i < chars.length; i++){
+		var index = chars[i].charCodeAt(0);
+	    var achar;
+		if(char_images[index])
+			achar = char_images[index];
+		else
+			achar = undef_char;
+		list.push(achar);
+		strWidth += achar[0].length;
+	}
+	var strHeight = list[0].length;
+	var x = cx - strWidth / 2;
+	var y = cy - strHeight / 2;
+	for(var i = 0; i < list.length; i++){
+		var achar = list[i];
+		draw(achar, x, y);
+		x += achar[0].length + interCharSpace;
+	}
+}
+
+function clear(){
+	ctx.fillStyle = "#335cff";
+	ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
+}
+		
+var c=document.getElementById("field");
+var ctx=c.getContext("2d");
+ctx.canvas.width  = width*(cellSize+interCell);
+ctx.canvas.height = height*(cellSize+interCell);
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+function rgb(r,g,b){
+	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+//=====================================================
+var Ball = function(){
+	this.image = ball;
+	this.width = this.image[0].length;
+	this.height = this.image.length;
+	this.X = 0;
+	this.Y = 0;
+	this.velocityX = 0;
+	this.velocityY = 0;
+	this.acc = 1.00;
+	
+	this.place = function(x, y){
+		this.X = x;
+		this.Y = y;
+	};
+	this.update = function(dt){
+		if(game_started){
+			this.velocityX += 0;
+			this.velocityY += 9.8 * 20 * dt;
+		}
+		this.X += this.velocityX * dt;
+		this.Y += this.velocityY * dt;
+	};
+	this.draw = function(){
+		draw(this.image, this.X, this.Y);
+	};
+	this.pushUp = function(){
+		this.velocityY = - 9.8 * 8;
+	};
+};
+//----------------------
+var Pipe = function(){
+	this.image = pipe;
+	this.image2 = pipe2;
+	this.image3 = pipeEdge;
+	this.width = this.image[0].length;
+	this.hole = 30;
+	this.pre_hole = 10;
+	this.posY = Math.floor((Math.random() * (height - this.hole - 5)) + 5);
+	this.X = width;
+	this.velocityX = -30;
+	this.destroy = false;
+	this.pass = false;
+	
+	this.draw = function(){		
+		var preY = this.posY - this.pre_hole;
+		if (preY < 0) 
+			preY = 0;
+		else 
+			draw(this.image3, this.X - 1, preY);
+		for(var i = 0; i < preY; i++){
+			draw(this.image, this.X, i);
+		}
+		for(var i = preY + 1; i < this.posY; i++){
+			draw(this.image2, this.X - 1, i);
+		}
+		draw(this.image3, this.X - 1, this.posY);
+		var preY2 = this.posY + this.hole;
+		var preY3 = preY2 + this.pre_hole;
+		draw(this.image3, this.X - 1, preY2);
+		for(var i = preY2 + 1; i < preY3 && i < height; i++){
+			draw(this.image2, this.X - 1, i);
+		}
+		if(preY3 < height)
+			draw(this.image3, this.X - 1, preY3);
+		for(var i = preY3 + 1; i < height; i++){
+			draw(this.image, this.X, i);
+		}
+	};
+	
+	this.update = function(dt){
+		this.X += this.velocityX * dt;
+		if(this.X + this.width < 0){
+			this.destroy = true;
+		}
+	};
+	
+	this.collidesWith = function(b){
+		var thisRight = this.X + this.width;
+		var bRight = b.X + b.width;
+		var bBottom = b.Y + b.height;
+		var thisY2 = this.posY + this.hole;
+		if(bRight >= this.X &&  b.X <= thisRight){
+			if(b.Y <= this.posY || bBottom >= thisY2)
+				return true;
+		}
+		return false;
+	};
+	
+	this.passed = function(b){
+		var thisRight = this.X + this.width;
+		if(!this.pass && (b.X > thisRight)){
+			this.pass = true;
+			return true;
+		}
+		return false;
+	}
+};
+//=====================================================
+function onSpacebarPush(){
+	if(!game_started){
+		game_started = true;
+	} else {
+		if(game_over){
+			game_over = false;
+			Game.init();
+		}
+	}	
+	Game.ball.pushUp();
+}
+
+$(document).on("tap",function(){
+   onSpacebarPush();
+});
+$(document).keyup(function(e){
+
+	var checkWebkitandIE = (e.keyCode==32 ? 1 : 0);
+    var checkMoz = (e.keyCode==32 ? 1 : 0);
+	
+    if (checkWebkitandIE || checkMoz) {	
+		onSpacebarPush();
+	}
+});
+//=====================================================
+var game_over = false;
+var Game = {};
+Game.init = function() {
+	Game.fps = 30;
+	Game.score = 0;
+	Game.ball = new Ball();
+	Game.ball.place(30, height / 2);
+	Game.pipes = [];
+	// @todo grass
+	Game.counter = 0;
+};
+Game.update = function() {
+	if(game_over) return;
+	var dt = Game.fps/1000;
+	Game.ball.update(dt);
+	if(Game.ball.Y + Game.ball.height >= height){
+		Game.ball.Y = height - Game.ball.height;
+		game_over = true;
+	}
+	for(var i =0; i < Game.pipes.length; i++){
+		var pipe = Game.pipes[i];
+		if(!pipe.destroy)
+			pipe.update(dt);
+		if(pipe.collidesWith(Game.ball)){
+			game_over = true;
+		}
+		if(pipe.passed(Game.ball)){
+			Game.score++;
+		}
+	}
+	if(game_started){
+		Game.counter += dt;
+		if(Game.counter > 2.5){
+			Game.counter = 0;
+			Game.pipes.push(new Pipe());
+		}
+	}
+};
+Game.draw = function() {
+	clear();
+	for(var i =0; i < Game.pipes.length; i++){
+		var pipe = Game.pipes[i];
+		pipe.draw();
+	}
+	
+	Game.ball.draw();
+	drawString("" + Game.score, width/2, height/4);
+	if(game_over)
+		drawString("game over", width/2, height/2);
+};
+Game.init();
+Game.run = (function() {
+	var loops = 0, 
+		skipTicks = 1000 / Game.fps,
+		maxFrameSkip = 10,
+		nextGameTick = (new Date).getTime();
+	return function() {
+		loops = 0;
+		while ((new Date).getTime() > nextGameTick) {
+			//updateStats.update();
+			Game.update();
+			nextGameTick += skipTicks;
+			loops++;
+		}
+		//renderStats.update();
+		Game.draw();
+	};
+})();
+(function() {
+  var onEachFrame;
+  if (window.webkitRequestAnimationFrame) {
+    onEachFrame = function(cb) {
+      var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else if (window.mozRequestAnimationFrame) {
+    onEachFrame = function(cb) {
+      var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else {
+    onEachFrame = function(cb) {
+      setInterval(cb, 1000 / 60);
+    }
+  }
+  
+  window.onEachFrame = onEachFrame;
+})();
+window.onEachFrame(Game.run);
+</script>
+</body>
+</html>
