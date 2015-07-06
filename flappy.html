@@ -1,0 +1,434 @@
+<html>
+<head>
+	<style type="text/css">
+	body {
+		overflow:hidden;
+	}
+	</style>
+</head>
+<body>
+<canvas id='field'>
+</canvas>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script>
+
+var game_started = false;
+var update_timer;
+var num_em_img = 
+"           \n"+
+"           \n"+
+"           \n"+
+"           \n"+
+"           \n"+
+"           \n"+
+"           \n"+
+"           \n"+
+"           ";
+var num_0_img = 
+"  2222222  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  2222222  ";
+var num_1_img = 
+"   2222    \n"+
+"   2222    \n"+
+"     22    \n"+
+"     22    \n"+
+"     22    \n"+
+"     22    \n"+
+"     22    \n"+
+"     22    \n"+
+"     22    ";
+var num_2_img = 
+"  2222222  \n"+
+"  2222222  \n"+
+"       22  \n"+
+"       22  \n"+
+"  2222222  \n"+
+"  22       \n"+
+"  22       \n"+
+"  2222222  \n"+
+"  2222222  ";
+var num_3_img = 
+"  2222222  \n"+
+"  2222222  \n"+
+"       22  \n"+
+"    22222  \n"+
+"    22222  \n"+
+"       22  \n"+
+"       22  \n"+
+"  2222222  \n"+
+"  2222222  ";
+var num_4_img = 
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  2222222  \n"+
+"       22  \n"+
+"       22  \n"+
+"       22  \n"+
+"       22  ";
+var num_5_img = 
+"  2222222  \n"+
+"  2222222  \n"+
+"  22       \n"+
+"  22       \n"+
+"  2222222  \n"+
+"       22  \n"+
+"       22  \n"+
+"  2222222  \n"+
+"  2222222  ";
+var num_6_img = 
+"  2222222  \n"+
+"  2222222  \n"+
+"  22       \n"+
+"  22       \n"+
+"  2222222  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  2222222  \n"+
+"  2222222  ";
+var num_7_img = 
+"  2222222  \n"+
+"  2222222  \n"+
+"       22  \n"+
+"      22   \n"+
+"     22    \n"+
+"    22     \n"+
+"   22      \n"+
+"  22       \n"+
+"  22       ";
+var num_8_img = 
+"  2222222  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  2222222  \n"+
+"  2222222  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  2222222  ";
+var num_9_img = 
+"  2222222  \n"+
+"  22   22  \n"+
+"  22   22  \n"+
+"  2222222  \n"+
+"  2222222  \n"+
+"       22  \n"+
+"       22  \n"+
+"       22  \n"+
+"  2222222  ";
+var game_over_img = 
+"0000 000 0   0 0000  0000 0   0 0000 0000\n"+
+"0    0 0 00 00 0     0  0 0   0 0    0  0\n"+
+"0 00 000 0 0 0 000   0  0  0 0  000  0000\n"+
+"0  0 0 0 0   0 0     0  0   0   0    0 0 \n"+
+"0000 0 0 0   0 0000  0000   0   0000 0  0";
+var ball_img = 
+"  11331  \n"+
+" 1113511 \n"+
+"151132251\n"+
+"151135151\n"+
+"152225151\n"+
+"22213511 \n"+
+"  11351  ";
+var pipe_img = "5523344444444433155";
+
+function readImg(str){
+	var arr = [[]];
+	for(var i = 0; i < str.length; i++){
+		var ch = str[i];
+		if(ch == '\n')
+			arr.push([]);
+		else {
+			var line = arr[arr.length - 1];
+			line.push(ch);
+		}
+	}
+	return arr;
+}
+
+var ball = readImg(ball_img);
+var pipe = readImg(pipe_img);
+var game_over_im = readImg(game_over_img);
+var numbers = [
+		readImg(num_0_img),
+		readImg(num_1_img),
+		readImg(num_2_img),
+		readImg(num_3_img),
+		readImg(num_4_img),
+		readImg(num_5_img),
+		readImg(num_6_img),
+		readImg(num_7_img),
+		readImg(num_8_img),
+		readImg(num_9_img),
+	];
+
+var width = 100;
+var height = 150;
+var cellSize = 3;
+var interCell = 0;
+
+function drawCell2(i, j, colChar){
+	if(i<0 || i>=height) return;
+	if(j<0 || j>=width-1) return;
+	var col;
+	switch(colChar){
+		case(' '): return;
+		case('0'): col = "#000000"; break;
+		case('1'): col = "#00660f"; break;
+		case('2'): col = "#fcfc00"; break;
+		case('3'): col = "#00fc00"; break;
+		case('4'): col = "#0ffcf0"; break;
+		case('5'): col = "#00fc00"; break;
+		default: col = "#ffffff"; break;
+	}
+	ctx.fillStyle = col;
+	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
+}
+
+function draw(obj, x, y){
+	for(var i = 0; i < obj.length; i++){
+		for(var j = 0; j < obj[0].length; j++){
+			var col = obj[i][j];
+			drawCell2(y + i, x + j, col);
+		}
+	}
+}
+
+function drawNumber(num){
+	var digits = ("" + num).split("");
+	var x = width/2 - (digits.length * numbers[0][0].length) / 2;
+	var y = height/4 - numbers[0].length / 2;
+	for(var i = 0; i < digits.length; i++){
+		var number = numbers[digits[i]];
+		if(i > 0) x += number[0].length;
+		draw(number, x, y);
+	}
+}
+
+function clear(){
+	ctx.fillStyle = "#335cff";
+	ctx.fillRect(0,0,width*(cellSize+interCell),height*(cellSize+interCell));
+}
+		
+var c=document.getElementById("field");
+var ctx=c.getContext("2d");
+ctx.canvas.width  = window.innerWidth;
+ctx.canvas.height = window.innerHeight;
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgb(r,g,b){
+	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+//=====================================================
+var Ball = function(){
+	this.image = ball;
+	this.width = this.image[0].length;
+	this.height = this.image.length;
+	this.X = 0;
+	this.Y = 0;
+	this.velocityX = 0;
+	this.velocityY = 0;
+	this.acc = 1.00;
+	
+	this.place = function(x, y){
+		this.X = x;
+		this.Y = y;
+	};
+	this.update = function(dt){
+		if(game_started){
+			this.velocityX += 0;
+			this.velocityY += 9.8 * 20 * dt;
+		}
+		this.X += this.velocityX * dt;
+		this.Y += this.velocityY * dt;
+	};
+	this.draw = function(){
+		draw(this.image, this.X, this.Y);
+	};
+};
+//----------------------
+var Pipe = function(){
+	this.image = pipe;
+	this.width = this.image[0].length;
+	this.hole = 30;
+	this.posY = Math.floor((Math.random() * (height - this.hole - 5)) + 5);
+	this.X = width;
+	this.velocityX = -30;
+	this.destroy = false;
+	this.pass = false;
+	
+	this.draw = function(){
+		for(var i = 0; i < this.posY; i++){
+			draw(this.image, this.X, i);
+		}
+		for(var i = this.posY + this.hole; i < height; i++){
+			draw(this.image, this.X, i);
+		}
+	};
+	
+	this.update = function(dt){
+		this.X += this.velocityX * dt;
+		if(this.X + this.width < 0){
+			this.destroy = true;
+		}
+	};
+	
+	this.collidesWith = function(b){
+		var thisRight = this.X + this.width;
+		var bRight = b.X + b.width;
+		var bBottom = b.Y + b.height;
+		var thisY2 = this.posY + this.hole;
+		if(bRight >= this.X &&  b.X <= thisRight){
+			if(b.Y <= this.posY || bBottom >= thisY2)
+				return true;
+		}
+		return false;
+	};
+	
+	this.passed = function(b){
+		var thisRight = this.X + this.width;
+		if(!this.pass && (b.X > thisRight)){
+			this.pass = true;
+			return true;
+		}
+		return false;
+	}
+};
+//=====================================================
+$(document).keyup(function(e){
+	var checkWebkitandIE = (e.which==32 ? 1 : 0);
+    var checkMoz = (e.which==32 ? 1 : 0);
+	
+    if (checkWebkitandIE || checkMoz) console.log("space pressed");
+	
+	if(!game_started){
+		game_started = true;
+		Game.ball.velocityY = - 9.8 * 8;
+	} else {
+		if(game_over){
+			game_over = false;
+			Game.init();
+		}
+		Game.ball.velocityY = - 9.8 * 8;
+	}
+});
+//=====================================================
+var game_over = false;
+
+var Game = {};
+
+Game.init = function() {
+	Game.fps = 30;
+	Game.score = 0;
+	Game.ball = new Ball();
+	Game.ball.place(30, height / 2);
+	Game.pipes = [];
+	// @todo grass
+	Game.counter = 0;
+};
+
+Game.update = function() {
+	if(game_over) return;
+	var dt = Game.fps/1000;
+	Game.ball.update(dt);
+	if(Game.ball.Y + Game.ball.height >= height){
+		Game.ball.Y = height - Game.ball.height;
+		game_over = true;
+	}
+	for(var i =0; i < Game.pipes.length; i++){
+		var pipe = Game.pipes[i];
+		if(!pipe.destroy)
+			pipe.update(dt);
+		if(pipe.collidesWith(Game.ball)){
+			game_over = true;
+		}
+		if(pipe.passed(Game.ball)){
+			Game.score++;
+			console.log(Game.score);
+		}
+	}
+	if(game_started){
+		Game.counter += dt;
+		if(Game.counter > 2.5){
+			Game.counter = 0;
+			Game.pipes.push(new Pipe());
+		}
+	}
+};
+
+Game.draw = function() {
+	clear();
+
+	for(var i =0; i < Game.pipes.length; i++){
+		var pipe = Game.pipes[i];
+		pipe.draw();
+	}
+	
+	Game.ball.draw();
+	drawNumber(Game.score);
+	if(game_over)
+		draw(game_over_im, width/2-game_over_im[0].length/2, height/2-game_over_im.length/2)
+};
+
+Game.init();
+
+Game.run = (function() {
+	var loops = 0, 
+		skipTicks = 1000 / Game.fps,
+		maxFrameSkip = 10,
+		nextGameTick = (new Date).getTime();
+
+	return function() {
+		loops = 0;
+
+		while ((new Date).getTime() > nextGameTick) {
+			//updateStats.update();
+			Game.update();
+			nextGameTick += skipTicks;
+			loops++;
+		}
+
+		//renderStats.update();
+		Game.draw();
+	};
+})();
+
+(function() {
+  var onEachFrame;
+  if (window.webkitRequestAnimationFrame) {
+    onEachFrame = function(cb) {
+      var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else if (window.mozRequestAnimationFrame) {
+    onEachFrame = function(cb) {
+      var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else {
+    onEachFrame = function(cb) {
+      setInterval(cb, 1000 / 60);
+    }
+  }
+  
+  window.onEachFrame = onEachFrame;
+})();
+
+window.onEachFrame(Game.run);
+
+</script>
+</body>
+</html>
