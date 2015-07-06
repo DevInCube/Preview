@@ -59,9 +59,9 @@
 </script>
 <script>
 var game_started = false;
-var width = 200;
-var height = 100;
-var cellSize = 3;
+var width = 400;
+var height = 200;
+var cellSize = 2;
 var interCell = 0;
 var color_transparent_opt = ' ';
 var color_opt = "#000000:0,#00660f:1,#fcfc00:2,#0ffcf0:4,#00fc00:5,#00cc00:3,#6666ff:7,#009900:9,#ff0000:r,#00ff00:g,#0000ff:b,#ffffff:w,#006606:e,#6686f0:q";
@@ -84,15 +84,51 @@ var undef_char_img = '\n'+
 'w        w\n'+
 'wwwwwwwwww\n';
 var ball_img = 
-"       0000000   \n"+
-"     00wwwwwww0  \n"+
-" 00 0wwwwwwwwww0 \n"+
-"0ww0www07www07w0 \n"+
-"07777ww00www00ww0\n"+
-"0ww777wwww0wwww70\n"+
-"0wwwwwwwwwwwwwww0\n"+
-" 0ww0wwwwwwwwww0 \n"+
-"  00 0000000000  ";
+'                      0000000000000000  \n'+
+'                      0555555555555550  \n'+
+'                    00055555555555555000\n'+
+'                    05555555555555555550\n'+
+'                    05555555555555555550\n'+
+'                    05555555505555555550\n'+
+'                    05555555555555555550\n'+
+'                    05555555555555555550\n'+
+'                    05555555555555555550\n'+
+'                    05555555555555555550\n'+
+'                    05555555500000000000\n'+
+'                    0555555550          \n'+
+'                    0555555550000000    \n'+
+'0                   0555555555555550    \n'+
+'00                  0555555000000000    \n'+
+'050               0005555550            \n'+
+'050               0555555550            \n'+
+'050            0000555555550            \n'+
+'050            05555555555500000        \n'+
+'0500        00005555555555555550        \n'+
+'0550        05555555555555555550        \n'+
+'055000    0005555555555555000050        \n'+
+'055550    055555555555555500 000        \n'+
+'0555500000055555555555555550            \n'+
+'0555555555555555555555555550            \n'+
+'0555555555555555555555555550            \n'+
+'0055555555555555555555555550            \n'+
+' 005555555555555555555555000            \n'+
+'  005555555555555555555550              \n'+
+'   05555555555555555555550              \n'+
+'   00055555555555555555000              \n'+
+'     0555555555555555550                \n'+
+'     0055555555555550000                \n'+
+'      0055555555000550                  \n'+
+'       0005555500 0550                  \n'+
+'         0555550  05500                 \n'+
+'         0555000  05550                 \n'+
+'         05550    00550                 \n'+
+'         05500     0050                 \n'+
+'         0550       050                 \n'+
+'         05500      05000               \n'+
+'         05550      05550               \n'+
+'         00000      00000               ';
+
+
 var grass_img = 
 '                    \n'+
 '00          0       \n'+
@@ -366,7 +402,59 @@ setFontChar(':',
 'www\n'+
 'www\n'+
 'www');
-
+var stone_1_img = 
+'   000        \n'+
+'  09990       \n'+
+'  05950       \n'+
+'  09990   00  \n'+
+'  09590  000  \n'+
+'  09990  090  \n'+
+'  05590  050  \n'+
+'  09990  090  \n'+
+'  09550  090  \n'+
+'  095900 050  \n'+
+'  0999900050  \n'+
+'  0099999590  \n'+
+'   095959990  \n'+
+'   009999900  \n'+
+'    0959500   \n'+
+'    009990    \n'+
+'     09950    \n'+
+'     05950    \n'+
+'     09950    \n'+
+'     05950    ';
+var stone_2_img = 
+'                \n'+
+'                \n'+
+'                \n'+
+'       0000     \n'+
+'      005500    \n'+
+'      055550    \n'+
+'   000095550    \n'+
+'   055595950    \n'+
+'   05999595000  \n'+
+'  0099059505550 \n'+
+'  0555009505550 \n'+
+' 00559905905500 \n'+
+' 00599900905000 \n'+
+' 055059500000900\n'+
+'0059059950509990\n'+
+'0559055990509990\n'+
+'0555009900500990\n'+
+'0555500500050900\n'+
+'005559000900000 \n'+
+'00005000999000  \n'+
+' 0900099555050  \n'+
+' 09909555590950 \n'+
+' 09905559990990 \n'+
+' 09900599590000 \n'+
+' 099905999000   \n'+
+'  00990999000   \n'+
+'   00009900     \n'+
+'      0000      \n'+
+'       000      \n'+
+'      00000     \n'+
+'     0000000    ';
 var undef_char = createCanvas(undef_char_img);
 function drawCellOn(ctx, i, j, colChar){
 	if(i<0 || i>=height) return;
@@ -476,6 +564,8 @@ var ContentManager = function(){
 	
 	this.addCanvas('hero', ball_img);
 	this.addCanvas('grass', grass_img);
+	this.addCanvas('stone1', stone_1_img);
+	this.addCanvas('stone2', stone_2_img);
 	
 	this.getCanvas = function(name){
 		return this.canvases[name];
@@ -526,7 +616,7 @@ var Grass = function(){
 	this.height = this.canvas.height / (cellSize + interCell);
 	this.X = 0;
 	this.Y = 0;
-	this.velocityX = -50;
+	this.velocityX = -75;
 	this.velocityY = 0;
 	
 	this.place = function(x, y){
@@ -544,58 +634,25 @@ var Grass = function(){
 };
 //----------------------
 var Pipe = function(){
-	this.image = readImg(pipe_img);
-	this.image2 = readImg(pipe2_img);
-	this.image3 = readImg(pipe_edge_img);
-	this.width = this.image3[0].length;
-	this.hole = 30;
-	this.pre_hole = 10;
-	this.posY = Math.floor((Math.random() * (height - this.hole - 5)) + 5);
+	this.canvas = resources.getCanvas('stone'+Math.floor((Math.random() * 2) + 1));
+	this.ctx = this.canvas.getContext("2d");
+	
+	this.width = this.canvas.width / (cellSize + interCell);
+	this.height = this.canvas.height / (cellSize + interCell);
+	this.Y = height - this.height;
 	this.X = width;
-	this.velocityX = -50;
+	this.velocityX = -75;
+	
 	this.destroy = false;
 	this.pass = false;
 	
-	this.canvas = document.createElement("canvas");
-	this.ctx = this.canvas.getContext("2d");
-	this.ctx.canvas.width  = this.width * (cellSize + interCell);
-	this.ctx.canvas.height = height * (cellSize+interCell);
-	
-	this.preDraw = function(){
-		var x = 0;
-		var preY = this.posY - this.pre_hole;
-		if (preY < 0) 
-			preY = 0;
-		else 
-			drawOn(this.ctx, this.image3, x, preY);
-		for(var i = 0; i < preY; i++){
-			drawOn(this.ctx, this.image, x + 1, i);
-		}
-		for(var i = preY + 1; i < this.posY; i++){
-			drawOn(this.ctx, this.image2, x, i);
-		}
-		drawOn(this.ctx, this.image3, x, this.posY);
-		var preY2 = this.posY + this.hole;
-		var preY3 = preY2 + this.pre_hole;
-		drawOn(this.ctx, this.image3, x, preY2);
-		for(var i = preY2 + 1; i < preY3 && i < height; i++){
-			drawOn(this.ctx, this.image2, x, i);
-		}
-		if(preY3 < height)
-			drawOn(this.ctx, this.image3, x, preY3);
-		for(var i = preY3 + 1; i < height; i++){
-			drawOn(this.ctx, this.image, x + 1, i);
-		}
-	};
-	
-	this.preDraw();
-	
-	this.draw = function(){		
-		renderer.render(this.canvas, this.X, 0);		
+	this.draw = function(){
+		renderer.render(this.canvas, this.X, this.Y);
 	};
 	
 	this.update = function(dt){
 		this.X += this.velocityX * dt;
+		
 		if(this.X + this.width < 0){
 			this.destroy = true;
 			delete this.canvas;
@@ -606,9 +663,8 @@ var Pipe = function(){
 		var thisRight = this.X + this.width;
 		var bRight = b.X + b.width;
 		var bBottom = b.Y + b.height;
-		var thisY2 = this.posY + this.hole;
 		if(bRight >= this.X &&  b.X <= thisRight){
-			if(b.Y <= this.posY || bBottom >= thisY2)
+			if(bBottom >= this.Y)
 				return true;
 		}
 		return false;
@@ -656,7 +712,7 @@ Game.init = function() {
 	Game.fps = 30;
 	Game.score = 0;
 	Game.ball = new Ball();
-	Game.ball.place(25, height / 2);
+	Game.ball.place(25, height - Game.ball.height);
 	Game.pipes = [];
 	Game.grass = [];
 	Game.resources = resources;
@@ -674,15 +730,15 @@ Game.init = function() {
 	Game.counter = 0;
 };
 Game.update = function() {
+	if(!game_started) return;
+	if(game_over) return;
+	
 	var dt = Game.fps/1000;
 	Game.ball.update(dt);
 	
 	if(Game.ball.Y + Game.ball.height >= height){
 		Game.ball.Y = height - Game.ball.height;
 	}
-	
-	if(game_over) return;
-	
 	
 	for(var i =0; i < Game.pipes.length; i++){
 		var pipe = Game.pipes[i];
@@ -691,7 +747,7 @@ Game.update = function() {
 		else
 			Game.pipes.splice(Game.pipes.indexOf(pipe), 1);
 		if(pipe.collidesWith(Game.ball)){
-			//game_over = true;
+			game_over = true;
 			if(Game.score > max_score)
 				max_score = Game.score;
 		}
@@ -735,7 +791,7 @@ Game.draw = function() {
 	
 	Game.ball.draw();
 	if(game_over) {
-		renderer.renderString("score: " + Game.score, width/2, height/4);
+		renderer.renderString("score: " + Game.score, width/2, height/5);
 		renderer.renderString("max: " + max_score, width/2, height/3);
 		renderer.renderString("game over", width/2, height/2);
 	}
