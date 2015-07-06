@@ -9,6 +9,7 @@
 	}
 	#bg { position: absolute; z-index: 0; }
 	#fg { position: absolute; z-index: 1; }
+	#goFS { position: absolute; z-index: 2; }
 	canvas {
 		position: absolute;
 		padding-left: 0;
@@ -25,9 +26,29 @@
 		<canvas id='bg'></canvas>
 		<canvas id='fg'></canvas>
 	</div>
-	
+	<button id="goFS">Go fullscreen<button>
 <script>
+   var goFS = document.getElementById("goFS");
+   goFS.addEventListener("click", function() {
+      toggleFullScreen();
+   }, false);
+   
+   function toggleFullScreen() {
+		var doc = window.document;
+		var docEl = doc.documentElement;
 
+		var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+		var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+		if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+			requestFullScreen.call(docEl);
+		}
+		else {
+			cancelFullScreen.call(doc);
+		}
+	}
+</script>
+<script>
 var game_started = false;
 var width = 100;
 var height = 150;
@@ -36,13 +57,11 @@ var interCell = 0;
 var color_transparent_opt = ' ';
 var color_opt = "#000000:0,#00660f:1,#fcfc00:2,#0ffcf0:4,#00fc00:5,#00cc00:3,#6666ff:7,#009900:9,#ff0000:r,#00ff00:g,#0000ff:b,#ffffff:w";
 var color_dict = {};
-
 var opts = color_opt.split(',');
 for(var i = 0; i < opts.length; i++){
 	var pair = opts[i].split(':');
 	color_dict[pair[1]] = pair[0];
 }
-
 var undef_char_img = '\n'+
 'wwwwwwwwww\n'+
 'w        w\n'+
@@ -54,7 +73,6 @@ var undef_char_img = '\n'+
 'w        w\n'+
 'w        w\n'+
 'wwwwwwwwww\n';
-
 var ball_img = 
 "     0000000     \n"+
 "   00wwwwwww00   \n"+
@@ -68,7 +86,6 @@ var ball_img =
 var pipe_img = "03gwggggg33g3339390";
 var pipe2_img = 	"03gwgggggg33g33339390";
 var pipe_edge_img = "000000000000000000000";
-
 function readImg(str){
 	var arr = [[]];
 	for(var i = 0; i < str.length; i++){		
@@ -89,7 +106,6 @@ function readImg(str){
 		arr.pop(arr[arr.length - 1]);
 	return arr;
 }
-
 function createCanvas(str){
 	var data = readImg(str);
 	var canvas = document.createElement('canvas');
@@ -98,9 +114,7 @@ function createCanvas(str){
 	drawOn(canvas.getContext('2d'), data, 0, 0);
 	return canvas;
 }
-
 var char_images = [];
-
 function setFontChar(ch, repr){
 	var code = ch.charCodeAt(0);
 	char_images[code] = createCanvas(repr);
@@ -275,7 +289,6 @@ setFontChar('g',
 ' wwwwwww\n'
 );
 var undef_char = createCanvas(undef_char_img);
-
 function drawCellOn(ctx, i, j, colChar){
 	if(i<0 || i>=height) return;
 	if(j<0 || j>=width-1) return;
@@ -291,14 +304,12 @@ function drawOn(ctx, obj, x, y){
 		}
 	}
 }
-
 var canvas_bg = document.getElementById("bg");
 var ctx_bg = canvas_bg.getContext('2d');
 ctx_bg.canvas.width  = width*(cellSize+interCell);
 ctx_bg.canvas.height = height*(cellSize+interCell);
 ctx_bg.fillStyle = "#335cff";
 ctx_bg.fillRect(0, 0, width*(cellSize+interCell), height*(cellSize+interCell));
-
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -308,10 +319,8 @@ function rgb(r,g,b){
 }
 //=====================================================
 var Renderer = function(){
-
 	var viewportWidth = width * (cellSize + interCell);
 	var viewportHeight = height * (cellSize + interCell);
-
 	this.canvas = document.getElementById("fg");
 	this.ctx = this.canvas.getContext("2d");
 	this.canvas.width  = viewportWidth;
@@ -364,7 +373,6 @@ var Renderer = function(){
 		this.ctx.drawImage(this.hidden_canvas, 0, 0, viewportWidth, viewportHeight);
 	};
 }
-
 var renderer = new Renderer();
 //-----------------------------------------------------
 var ContentManager = function(){
@@ -383,13 +391,11 @@ var ContentManager = function(){
 		return this.canvases[name];
 	}
 };
-
 var resoures = new ContentManager();
 //=====================================================
 // MODELS
 //=====================================================
 var Ball = function(){
-
 	this.canvas = resoures.getCanvas('hero');
 	this.ctx = this.canvas.getContext("2d");	
 	
@@ -424,7 +430,6 @@ var Ball = function(){
 };
 //----------------------
 var Pipe = function(){
-
 	this.image = readImg(pipe_img);
 	this.image2 = readImg(pipe2_img);
 	this.image3 = readImg(pipe_edge_img);
@@ -516,12 +521,10 @@ function onSpacebarPush(){
 	}	
 	Game.ball.pushUp();
 }
-
 $(document).on("tap",function(){
    onSpacebarPush();
 });
 $(document).keyup(function(e){
-
 	var checkWebkitandIE = (e.keyCode==32 ? 1 : 0);
     var checkMoz = (e.keyCode==32 ? 1 : 0);
 	
@@ -587,7 +590,7 @@ Game.draw = function() {
 	renderer.post_render();
 	
 	var t_end = Date.now();
-	console.log((t_end-t_start)+"ms");
+	//console.log((t_end-t_start)+"ms");
 };
 Game.init();
 Game.run = (function() {
