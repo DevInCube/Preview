@@ -744,7 +744,7 @@ Game.update = function() {
 	if(lastGrass) {
 		if(lastGrass.X + lastGrass.width < width){
 			var new_gr = new Grass();
-			new_gr.place(lastGrass.X + lastGrass.width + 1, height - lastGrass.height);
+			new_gr.place(lastGrass.X + lastGrass.width, height - lastGrass.height);
 			Game.grass.push(new_gr);
 		}
 	}
