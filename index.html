@@ -188,32 +188,38 @@ function setFontChar(ch, repr){
 	char_images[code] = createCanvas(repr);
 }
 setFontChar('0',
-' wwwwwww \n'+
-'www   www\n'+
-'www  wwww\n'+
-'www w www\n'+
-'wwww  www\n'+
-'www   www\n'+
-'www   www\n'+
-' wwwwwww ');
+'  0000000  \n'+
+' 0wwwwwww0 \n'+
+'0www000www0\n'+
+'0www00wwww0\n'+
+'0www0w0www0\n'+
+'0wwww00www0\n'+
+'0www0 0www0\n'+
+'0www000www0\n'+
+' 0wwwwwww0 \n'+
+'  0000000  \n');
 setFontChar('1',
-'www \n'+
-' www\n'+
-' www\n'+
-' www\n'+
-' www\n'+
-' www\n'+
-' www\n'+
-' www');
+' 000  \n'+
+'0www0 \n'+
+'00www0\n'+
+' 0www0\n'+
+' 0www0\n'+
+' 0www0\n'+
+' 0www0\n'+
+' 0www0\n'+
+' 0www0\n'+
+' 00000');
 setFontChar('2',
-'wwwwwww \n'+
-'     www\n'+
-'     www\n'+
-' wwwwwww\n'+
-'www     \n'+
-'www     \n'+
-'www     \n'+
-'wwwwwwww');
+'0000000000\n'+
+'0wwwwwwww0\n'+
+'000000www0\n'+
+'  0000www0\n'+
+'00wwwwwww0\n'+
+'0www00000 \n'+
+'0www0     \n'+
+'0www000000\n'+
+'0wwwwwwww0\n'+
+'0000000000');
 setFontChar('3',
 'wwwwwww \n'+
 '     www\n'+
@@ -733,6 +739,8 @@ Game.update = function() {
 		var pipe = Game.pipes[i];
 		if(!pipe.destroy)
 			pipe.update(dt);
+		else
+			Game.pipes.splice(Game.pipes.indexOf(pipe), 1);
 		if(pipe.collidesWith(Game.ball)){
 			game_over = true;
 			if(Game.score > max_score)
@@ -744,7 +752,10 @@ Game.update = function() {
 	}
 	for(var i = 0; i < Game.grass.length; i++){
 		var gr = Game.grass[i];
-		gr.update(dt);
+		if(gr.X + gr.width < 0)
+			Game.grass.splice(Game.grass.indexOf(gr), 1);
+		else
+			gr.update(dt);
 	}
 	var lastGrass = Game.grass[Game.grass.length - 1];
 	if(lastGrass) {
