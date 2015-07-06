@@ -28,7 +28,9 @@
 	</div>
 	<!--<button id="goFS">Go fullscreen<button>-->
 <script>
-$("canvas").parents("*").css("overflow", "visible");
+if(typeof console === "undefined"){
+      console = {};
+}
 	
    var goFS = document.getElementById("goFS");
    if(goFS) {
