@@ -28,6 +28,18 @@
 	</div>
 	<!--<button id="goFS">Go fullscreen<button>-->
 <script>
+// If Samsung android browser is detected
+if (window.navigator && window.navigator.userAgent.indexOf('534.30') > 0) {
+
+    // Tweak the canvas opacity, causing it to redraw
+    $('canvas').css('opacity', '0.99');
+
+    // Set the canvas opacity back to normal after 5ms
+    setTimeout(function() {
+        $('canvas').css('opacity', '1');
+    }, 5);
+
+}
    var goFS = document.getElementById("goFS");
    if(goFS) {
 	   goFS.addEventListener("click", function() {
