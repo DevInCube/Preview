@@ -124,12 +124,12 @@ var undef_char_img = '\n'+
 'w        w\n'+
 'wwwwwwwwww\n';
 var ball_img = 
-"     0000000     \n"+
-"   00wwwwwww00   \n"+
-"  0wwwwwwwwwww0  \n"+
-" 0wwwww07www07w0 \n"+
+"       0000000   \n"+
+"     00wwwwwww0  \n"+
+" 00 0wwwwwwwwww0 \n"+
+"0ww0www07www07w0 \n"+
 "07777ww00www00ww0\n"+
-"0ww777wwww0wwwww0\n"+
+"0ww777wwww0wwww70\n"+
 "0wwwwwwwwwwwwwww0\n"+
 " 0ww0wwwwwwwwww0 \n"+
 "  00 0000000000  ";
@@ -682,11 +682,13 @@ $(document).keyup(function(e){
 });
 //=====================================================
 var game_over = false;
+var max_score = 0;
+
 var Game = {};
+
 Game.init = function() {
 	Game.fps = 30;
 	Game.score = 0;
-	Game.max_score = 0;
 	Game.ball = new Ball();
 	Game.ball.place(25, height / 2);
 	Game.pipes = [];
@@ -713,8 +715,8 @@ Game.update = function() {
 		Game.ball.Y = height - Game.ball.height;
 		if(!game_over) {
 			game_over = true;
-			if(Game.score > Game.max_score)
-				Game.max_score = Game.score;
+			if(Game.score > max_score)
+				max_score = Game.score;
 		}
 	}
 	
@@ -727,6 +729,8 @@ Game.update = function() {
 			pipe.update(dt);
 		if(pipe.collidesWith(Game.ball)){
 			game_over = true;
+			if(Game.score > max_score)
+				max_score = Game.score;
 		}
 		if(pipe.passed(Game.ball)){
 			Game.score++;
@@ -766,7 +770,7 @@ Game.draw = function() {
 	Game.ball.draw();
 	if(game_over) {
 		renderer.renderString("score: " + Game.score, width/2, height/4);
-		renderer.renderString("max: " + Game.max_score, width/2, height/3);
+		renderer.renderString("max: " + max_score, width/2, height/3);
 		renderer.renderString("game over", width/2, height/2);
 	}
 	if(!game_started) {
