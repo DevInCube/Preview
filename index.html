@@ -10,12 +10,13 @@
 	#bg { position: absolute; z-index: 0; }
 	#fg { position: absolute; z-index: 1; }
 	#lbl, #goFS { position: absolute; z-index: 2; }
-	body { background-color: #336;}
+	body { background-color: #224;}
 	#container {
-		position: relative;	
-		  width: 40%;	
-		  height: 100%;	
-		  margin: 20px auto;
+		  position: relative;	
+		  width: 60vmin;	
+		  height: 90vmin;	
+		  margin: 5vmin auto;
+		  border: 8px solid black;
 	}
 	canvas {
 		padding-left: 0;
@@ -188,38 +189,38 @@ function setFontChar(ch, repr){
 	char_images[code] = createCanvas(repr);
 }
 setFontChar('0',
-'  0000000  \n'+
-' 0wwwwwww0 \n'+
-'0www000www0\n'+
-'0www00wwww0\n'+
-'0www0w0www0\n'+
-'0wwww00www0\n'+
-'0www0 0www0\n'+
-'0www000www0\n'+
-' 0wwwwwww0 \n'+
-'  0000000  \n');
+'           \n'+
+'  wwwwwww  \n'+
+' www   www \n'+
+' www  wwww \n'+
+' www w www \n'+
+' wwww  www \n'+
+' www   www \n'+
+' www   www \n'+
+'  wwwwwww  \n'+
+'           \n');
 setFontChar('1',
-' 000  \n'+
-'0www0 \n'+
-'00www0\n'+
-' 0www0\n'+
-' 0www0\n'+
-' 0www0\n'+
-' 0www0\n'+
-' 0www0\n'+
-' 0www0\n'+
-' 00000');
+'      \n'+
+' www  \n'+
+'  www \n'+
+'  www \n'+
+'  www \n'+
+'  www \n'+
+'  www \n'+
+'  www \n'+
+'  www \n'+
+'      ');
 setFontChar('2',
-'0000000000\n'+
-'0wwwwwwww0\n'+
-'000000www0\n'+
-'  0000www0\n'+
-'00wwwwwww0\n'+
-'0www00000 \n'+
-'0www0     \n'+
-'0www000000\n'+
-'0wwwwwwww0\n'+
-'0000000000');
+'          \n'+
+' wwwwwwww \n'+
+'      www \n'+
+'      www \n'+
+'  wwwwwww \n'+
+' www      \n'+
+' www      \n'+
+' www      \n'+
+' wwwwwwww \n'+
+'          ');
 setFontChar('3',
 'wwwwwww \n'+
 '     www\n'+
