@@ -1,180 +1,260 @@
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<style type="text/css">
 	body {
 		overflow:hidden;
 	}
+	canvas {
+		padding-left: 0;
+		padding-right: 0;
+		margin-left: auto;
+		margin-right: auto;
+		display: block;
+		height: 100%;
+	}
 	</style>
 </head>
 <body>
-<canvas id='field'>
-</canvas>
+	<div id="container">
+		<canvas id='field'></canvas>
+	</div>
 <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script>
-
 var game_started = false;
-var update_timer;
-var num_em_img = 
-"           \n"+
-"           \n"+
-"           \n"+
-"           \n"+
-"           \n"+
-"           \n"+
-"           \n"+
-"           \n"+
-"           ";
-var num_0_img = 
-"  2222222  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  2222222  ";
-var num_1_img = 
-"   2222    \n"+
-"   2222    \n"+
-"     22    \n"+
-"     22    \n"+
-"     22    \n"+
-"     22    \n"+
-"     22    \n"+
-"     22    \n"+
-"     22    ";
-var num_2_img = 
-"  2222222  \n"+
-"  2222222  \n"+
-"       22  \n"+
-"       22  \n"+
-"  2222222  \n"+
-"  22       \n"+
-"  22       \n"+
-"  2222222  \n"+
-"  2222222  ";
-var num_3_img = 
-"  2222222  \n"+
-"  2222222  \n"+
-"       22  \n"+
-"    22222  \n"+
-"    22222  \n"+
-"       22  \n"+
-"       22  \n"+
-"  2222222  \n"+
-"  2222222  ";
-var num_4_img = 
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  2222222  \n"+
-"       22  \n"+
-"       22  \n"+
-"       22  \n"+
-"       22  ";
-var num_5_img = 
-"  2222222  \n"+
-"  2222222  \n"+
-"  22       \n"+
-"  22       \n"+
-"  2222222  \n"+
-"       22  \n"+
-"       22  \n"+
-"  2222222  \n"+
-"  2222222  ";
-var num_6_img = 
-"  2222222  \n"+
-"  2222222  \n"+
-"  22       \n"+
-"  22       \n"+
-"  2222222  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  2222222  \n"+
-"  2222222  ";
-var num_7_img = 
-"  2222222  \n"+
-"  2222222  \n"+
-"       22  \n"+
-"      22   \n"+
-"     22    \n"+
-"    22     \n"+
-"   22      \n"+
-"  22       \n"+
-"  22       ";
-var num_8_img = 
-"  2222222  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  2222222  \n"+
-"  2222222  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  2222222  ";
-var num_9_img = 
-"  2222222  \n"+
-"  22   22  \n"+
-"  22   22  \n"+
-"  2222222  \n"+
-"  2222222  \n"+
-"       22  \n"+
-"       22  \n"+
-"       22  \n"+
-"  2222222  ";
-var game_over_img = 
-"0000 000 0   0 0000  0000 0   0 0000 0000\n"+
-"0    0 0 00 00 0     0  0 0   0 0    0  0\n"+
-"0 00 000 0 0 0 000   0  0  0 0  000  0000\n"+
-"0  0 0 0 0   0 0     0  0   0   0    0 0 \n"+
-"0000 0 0 0   0 0000  0000   0   0000 0  0";
+
+var undef_char_img = '\n'+
+'wwwwwwwwww\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'w        w\n'+
+'wwwwwwwwww\n';
+
 var ball_img = 
-"  11331  \n"+
-" 1113511 \n"+
-"151132251\n"+
-"151135151\n"+
-"152225151\n"+
-"22213511 \n"+
-"  11351  ";
-var pipe_img = "5523344444444433155";
+"     0000000     \n"+
+"   00wwwwwww00   \n"+
+"  0wwwwwwwwwww0  \n"+
+" 0wwwww07www07w0 \n"+
+"07777ww00www00ww0\n"+
+"0ww777wwww0wwwww0\n"+
+"0wwwwwwwwwwwwwww0\n"+
+" 0ww0wwwwwwwwww0 \n"+
+"  00 0000000000  ";
+var pipe_img = "03gwggggg33g3339390";
+var pipe2_img = 	"03gwgggggg33g33339390";
+var pipe_edge_img = "000000000000000000000";
 
 function readImg(str){
 	var arr = [[]];
-	for(var i = 0; i < str.length; i++){
+	for(var i = 0; i < str.length; i++){		
 		var ch = str[i];
-		if(ch == '\n')
-			arr.push([]);
+		if(ch == '\n'){ 
+			if(arr[arr.length - 1].length > 0)
+				arr.push([]);
+		}
+		else if(ch == '\r'){
+			continue;
+		}
 		else {
 			var line = arr[arr.length - 1];
 			line.push(ch);
 		}
 	}
+	if(arr[arr.length - 1].length == 0)
+		arr.pop(arr[arr.length - 1]);
 	return arr;
 }
 
+var char_images = [];
+
+function setFontChar(ch, repr){
+	char_images[ch.charCodeAt(0)] = readImg(repr);
+}
+setFontChar('0',
+' wwwwwww \n'+
+'www   www\n'+
+'www   www\n'+
+'wwwwwwwww\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+' wwwwwww ');
+setFontChar('1',
+'www \n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www\n'+
+' www');
+setFontChar('2',
+'wwwwwww \n'+
+'     www\n'+
+'     www\n'+
+' wwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwwwww');
+setFontChar('3',
+'wwwwwww \n'+
+'     www\n'+
+'     www\n'+
+'  wwwww \n'+
+'     ww \n'+
+'     www\n'+
+'     www\n'+
+'wwwwwww ');
+setFontChar('4',
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+'wwwwwwww\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www');
+setFontChar('5',
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+' wwwwww \n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'wwwwwww ');
+setFontChar('6',
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'wwwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwww ');
+setFontChar('7',
+'wwwwwww \n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'     www');
+setFontChar('8',
+' wwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwww \n'+
+' ww  ww \n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwww ');
+setFontChar('9',
+' wwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+'wwwwwwww\n'+
+'     www\n'+
+'     www\n'+
+'     www\n'+
+'wwwwwww ');
+setFontChar(' ', 
+'     ');
+setFontChar('a', 
+' wwwwww \n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+'wwwwwwww\n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'
+);
+setFontChar('e', 
+'wwwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwww  \n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'wwwwwwww\n'
+);
+setFontChar('m', 
+'wwwwwwwwwwwww \n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'+
+'www   www  www\n'
+);
+setFontChar('o', 
+' wwwwwww \n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+' wwwwwww \n'
+);
+setFontChar('r', 
+'wwwwwwww \n'+
+'www   www\n'+
+'www   www\n'+
+'www   ww \n'+
+'wwwwwwww \n'+
+'www   ww \n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'
+);
+setFontChar('v', 
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'www   www\n'+
+'wwwwwwww \n'
+);
+setFontChar('g', 
+' wwwwwww\n'+
+'www     \n'+
+'www     \n'+
+'www     \n'+
+'www wwww\n'+
+'www  www\n'+
+'www  www\n'+
+'www  www\n'+
+' wwwwwww\n'
+);
+var undef_char = readImg(undef_char_img);
+
 var ball = readImg(ball_img);
 var pipe = readImg(pipe_img);
-var game_over_im = readImg(game_over_img);
-var numbers = [
-		readImg(num_0_img),
-		readImg(num_1_img),
-		readImg(num_2_img),
-		readImg(num_3_img),
-		readImg(num_4_img),
-		readImg(num_5_img),
-		readImg(num_6_img),
-		readImg(num_7_img),
-		readImg(num_8_img),
-		readImg(num_9_img),
-	];
+var pipe2 = readImg(pipe2_img);
+var pipeEdge = readImg(pipe_edge_img);
 
 var width = 100;
 var height = 150;
 var cellSize = 3;
 var interCell = 0;
-
 function drawCell2(i, j, colChar){
 	if(i<0 || i>=height) return;
 	if(j<0 || j>=width-1) return;
@@ -184,15 +264,20 @@ function drawCell2(i, j, colChar){
 		case('0'): col = "#000000"; break;
 		case('1'): col = "#00660f"; break;
 		case('2'): col = "#fcfc00"; break;
-		case('3'): col = "#00fc00"; break;
+		case('3'): col = "#00cc00"; break;
+		case('9'): col = "#009900"; break;
 		case('4'): col = "#0ffcf0"; break;
 		case('5'): col = "#00fc00"; break;
+		case('7'): col = "#6666ff"; break;
+		case('r'): col = "#ff0000"; break;
+		case('g'): col = "#00ff00"; break;
+		case('b'): col = "#0000ff"; break;
+		case('w'): col = "#ffffff"; break;
 		default: col = "#ffffff"; break;
 	}
 	ctx.fillStyle = col;
 	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
 }
-
 function draw(obj, x, y){
 	for(var i = 0; i < obj.length; i++){
 		for(var j = 0; j < obj[0].length; j++){
@@ -202,14 +287,28 @@ function draw(obj, x, y){
 	}
 }
 
-function drawNumber(num){
-	var digits = ("" + num).split("");
-	var x = width/2 - (digits.length * numbers[0][0].length) / 2;
-	var y = height/4 - numbers[0].length / 2;
-	for(var i = 0; i < digits.length; i++){
-		var number = numbers[digits[i]];
-		if(i > 0) x += number[0].length;
-		draw(number, x, y);
+function drawString(string, cx, cy){
+	var chars = string.toLowerCase().split("");
+	var list = [];
+	var interCharSpace = 1;
+	var strWidth = (chars.length-1)*interCharSpace;		
+	for(var i = 0; i < chars.length; i++){
+		var index = chars[i].charCodeAt(0);
+	    var achar;
+		if(char_images[index])
+			achar = char_images[index];
+		else
+			achar = undef_char;
+		list.push(achar);
+		strWidth += achar[0].length;
+	}
+	var strHeight = list[0].length;
+	var x = cx - strWidth / 2;
+	var y = cy - strHeight / 2;
+	for(var i = 0; i < list.length; i++){
+		var achar = list[i];
+		draw(achar, x, y);
+		x += achar[0].length + interCharSpace;
 	}
 }
 
@@ -220,18 +319,16 @@ function clear(){
 		
 var c=document.getElementById("field");
 var ctx=c.getContext("2d");
-ctx.canvas.width  = window.innerWidth;
-ctx.canvas.height = window.innerHeight;
+ctx.canvas.width  = width*(cellSize+interCell);
+ctx.canvas.height = height*(cellSize+interCell);
 
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
 }
-
 function rgb(r,g,b){
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
-
 //=====================================================
 var Ball = function(){
 	this.image = ball;
@@ -262,19 +359,39 @@ var Ball = function(){
 //----------------------
 var Pipe = function(){
 	this.image = pipe;
+	this.image2 = pipe2;
+	this.image3 = pipeEdge;
 	this.width = this.image[0].length;
 	this.hole = 30;
+	this.pre_hole = 10;
 	this.posY = Math.floor((Math.random() * (height - this.hole - 5)) + 5);
 	this.X = width;
 	this.velocityX = -30;
 	this.destroy = false;
 	this.pass = false;
 	
-	this.draw = function(){
-		for(var i = 0; i < this.posY; i++){
+	this.draw = function(){		
+		var preY = this.posY - this.pre_hole;
+		if (preY < 0) 
+			preY = 0;
+		else 
+			draw(this.image3, this.X - 1, preY);
+		for(var i = 0; i < preY; i++){
 			draw(this.image, this.X, i);
 		}
-		for(var i = this.posY + this.hole; i < height; i++){
+		for(var i = preY + 1; i < this.posY; i++){
+			draw(this.image2, this.X - 1, i);
+		}
+		draw(this.image3, this.X - 1, this.posY);
+		var preY2 = this.posY + this.hole;
+		var preY3 = preY2 + this.pre_hole;
+		draw(this.image3, this.X - 1, preY2);
+		for(var i = preY2 + 1; i < preY3 && i < height; i++){
+			draw(this.image2, this.X - 1, i);
+		}
+		if(preY3 < height)
+			draw(this.image3, this.X - 1, preY3);
+		for(var i = preY3 + 1; i < height; i++){
 			draw(this.image, this.X, i);
 		}
 	};
@@ -327,9 +444,7 @@ $(document).keyup(function(e){
 });
 //=====================================================
 var game_over = false;
-
 var Game = {};
-
 Game.init = function() {
 	Game.fps = 30;
 	Game.score = 0;
@@ -339,7 +454,6 @@ Game.init = function() {
 	// @todo grass
 	Game.counter = 0;
 };
-
 Game.update = function() {
 	if(game_over) return;
 	var dt = Game.fps/1000;
@@ -368,44 +482,36 @@ Game.update = function() {
 		}
 	}
 };
-
 Game.draw = function() {
 	clear();
-
 	for(var i =0; i < Game.pipes.length; i++){
 		var pipe = Game.pipes[i];
 		pipe.draw();
 	}
 	
 	Game.ball.draw();
-	drawNumber(Game.score);
+	drawString("" + Game.score, width/2, height/4);
 	if(game_over)
-		draw(game_over_im, width/2-game_over_im[0].length/2, height/2-game_over_im.length/2)
+		drawString("game over", width/2, height/2);
 };
-
 Game.init();
-
 Game.run = (function() {
 	var loops = 0, 
 		skipTicks = 1000 / Game.fps,
 		maxFrameSkip = 10,
 		nextGameTick = (new Date).getTime();
-
 	return function() {
 		loops = 0;
-
 		while ((new Date).getTime() > nextGameTick) {
 			//updateStats.update();
 			Game.update();
 			nextGameTick += skipTicks;
 			loops++;
 		}
-
 		//renderStats.update();
 		Game.draw();
 	};
 })();
-
 (function() {
   var onEachFrame;
   if (window.webkitRequestAnimationFrame) {
@@ -426,9 +532,7 @@ Game.run = (function() {
   
   window.onEachFrame = onEachFrame;
 })();
-
 window.onEachFrame(Game.run);
-
 </script>
 </body>
 </html>
