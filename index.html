@@ -26,7 +26,6 @@
 		<canvas id='bg'></canvas>
 		<canvas id='fg'></canvas>
 	</div>
-	<label id='lbl'></label>
 	<!--<button id="goFS">Go fullscreen<button>-->
 <script>
    var goFS = document.getElementById("goFS");
@@ -810,11 +809,30 @@ Game.run = (function() {
 	};
 })();
 (function() {
-	var lbl = document.getElementById("lbl");
   var onEachFrame;
-  onEachFrame = function(cb) {
+  if(window.requestAnimationFrame) {
+	
+	onEachFrame = function(cb) {
+      var _cb = function() { cb(); requestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else if (window.webkitRequestAnimationFrame) {
+
+    onEachFrame = function(cb) {
+      var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else if (window.mozRequestAnimationFrame) {
+	
+    onEachFrame = function(cb) {
+      var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
+      _cb();
+    };
+  } else {
+    onEachFrame = function(cb) {
       setInterval(cb, 1000 / 30);
     }
+  }
   
   window.onEachFrame = onEachFrame;
 })();
