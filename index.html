@@ -10,7 +10,7 @@
 	#bg { position: absolute; z-index: 0; }
 	#fg { position: absolute; z-index: 1; }
 	#lbl, #goFS { position: absolute; z-index: 2; }
-	canvas {
+	#goFS, canvas {
 		position: absolute;
 		padding-left: 0;
 		padding-right: 0;
@@ -26,7 +26,7 @@
 		<canvas id='bg'></canvas>
 		<canvas id='fg'></canvas>
 	</div>
-	<!--<button id="goFS">Go fullscreen<button>-->
+	<button id="goFS">Go fullscreen<button>
 <script>
    var goFS = document.getElementById("goFS");
    if(goFS) {
