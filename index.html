@@ -276,27 +276,6 @@ setFontChar('g',
 );
 var undef_char = createCanvas(undef_char_img);
 
-var ball = readImg(ball_img);
-var pipe = readImg(pipe_img);
-var pipe2 = readImg(pipe2_img);
-var pipeEdge = readImg(pipe_edge_img);
-
-function drawCell2(i, j, colChar){
-	if(i < 0 || i >= height) return;
-	if(j < 0 || j >= width - 1) return;
-	if(colChar == color_transparent_opt) return;		
-	renderer.ctx.fillStyle = color_dict[colChar];
-	renderer.ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
-}
-function draw(obj, x, y){
-	for(var i = 0; i < obj.length; i++){
-		for(var j = 0; j < obj[0].length; j++){
-			var col = obj[i][j];
-			drawCell2(y + i, x + j, col);
-		}
-	}
-}
-
 function drawCellOn(ctx, i, j, colChar){
 	if(i<0 || i>=height) return;
 	if(j<0 || j>=width-1) return;
@@ -313,31 +292,6 @@ function drawOn(ctx, obj, x, y){
 	}
 }
 
-function drawString(string, cx, cy){
-	var chars = string.toLowerCase().split("");
-	var list = [];
-	var interCharSpace = 1;
-	var strWidth = (chars.length-1)*interCharSpace;		
-	for(var i = 0; i < chars.length; i++){
-		var index = chars[i].charCodeAt(0);
-	    var achar;
-		if(char_images[index])
-			achar = char_images[index];
-		else
-			achar = undef_char;
-		list.push(achar);
-		strWidth += achar.width;
-	}
-	var strHeight = list[0].height;
-	var x = cx - strWidth/ (cellSize + interCell) / 2;
-	var y = cy - strHeight / 2;
-	for(var i = 0; i < list.length; i++){
-		var achar = list[i];
-		renderer.render(achar, x, y);		
-		x += achar.width / (cellSize + interCell) + interCharSpace;
-	}
-}
-
 var canvas_bg = document.getElementById("bg");
 var ctx_bg = canvas_bg.getContext('2d');
 ctx_bg.canvas.width  = width*(cellSize+interCell);
@@ -345,12 +299,6 @@ ctx_bg.canvas.height = height*(cellSize+interCell);
 ctx_bg.fillStyle = "#335cff";
 ctx_bg.fillRect(0, 0, width*(cellSize+interCell), height*(cellSize+interCell));
 
-/*
-var c2 = document.createElement("canvas");
-ctx = c2.getContext("2d");
-ctx.canvas.width  = width*(cellSize+interCell);
-ctx.canvas.height = height*(cellSize+interCell);
-*/
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -361,40 +309,99 @@ function rgb(r,g,b){
 //=====================================================
 var Renderer = function(){
 
+	var viewportWidth = width * (cellSize + interCell);
+	var viewportHeight = height * (cellSize + interCell);
+
 	this.canvas = document.getElementById("fg");
 	this.ctx = this.canvas.getContext("2d");
-	this.canvas.width  = width * (cellSize + interCell);
-	this.canvas.height = height * (cellSize + interCell);
+	this.canvas.width  = viewportWidth;
+	this.canvas.height = viewportHeight;
+	
+	this.hidden_canvas = document.createElement("canvas");
+	this.hidden_ctx = this.hidden_canvas.getContext("2d");
+	this.hidden_canvas.width  = viewportWidth;
+	this.hidden_canvas.height = viewportHeight;
 	
 	this.render = function(canvas, px, py) {
-		this.ctx.drawImage(canvas, px * (cellSize + interCell), py * (cellSize + interCell), canvas.width, canvas.height);
+		this.hidden_ctx.drawImage(canvas, 
+			Math.round(px * (cellSize + interCell)), 
+			Math.round(py * (cellSize + interCell)), 
+			canvas.width, 
+			canvas.height);
 	};
 	
-	this.clear = function(){
+	this.renderString = function(string, cx, cy){
+		var chars = string.toLowerCase().split("");
+		var list = [];
+		var interCharSpace = 1;
+		var strWidth = (chars.length-1)*interCharSpace;		
+		for(var i = 0; i < chars.length; i++){
+			var index = chars[i].charCodeAt(0);
+			var achar;
+			if(char_images[index])
+				achar = char_images[index];
+			else
+				achar = undef_char;
+			list.push(achar);
+			strWidth += achar.width;
+		}
+		var strHeight = list[0].height;
+		var x = cx - strWidth / (cellSize + interCell) / 2;
+		var y = cy - strHeight / 2;
+		for(var i = 0; i < list.length; i++){
+			var achar = list[i];
+			this.render(achar, x, y);		
+			x += achar.width / (cellSize + interCell) + interCharSpace;
+		}
+	}
+	
+	this.pre_render = function(){
+		this.hidden_ctx.canvas.width = this.hidden_ctx.canvas.width;
+	};
+	
+	this.post_render = function(){
 		this.ctx.canvas.width = this.ctx.canvas.width;
+		this.ctx.drawImage(this.hidden_canvas, 0, 0, viewportWidth, viewportHeight);
 	};
 }
 
 var renderer = new Renderer();
+//-----------------------------------------------------
+var ContentManager = function(){
+	this.canvases = {};
+	
+	var imgData = readImg(ball_img);
+	var hero_canvas = document.createElement("canvas");
+	var hero_ctx = hero_canvas.getContext("2d");
+	hero_canvas.width  = imgData[0].length * (cellSize + interCell);
+	hero_canvas.height = imgData.length * (cellSize + interCell);
+	drawOn(hero_ctx, imgData, 0, 0);
+	
+	this.canvases['hero'] = hero_canvas;
+	
+	this.getCanvas = function(name){
+		return this.canvases[name];
+	}
+};
+
+var resoures = new ContentManager();
 //=====================================================
 // MODELS
 //=====================================================
 var Ball = function(){
 
-	this.image = ball;
-	this.width = this.image[0].length;
-	this.height = this.image.length;
+	this.canvas = resoures.getCanvas('hero');
+	this.ctx = this.canvas.getContext("2d");	
+	
+	this.width = this.canvas.width / (cellSize + interCell);
+	this.height = this.canvas.height / (cellSize + interCell);
 	this.X = 0;
 	this.Y = 0;
 	this.velocityX = 0;
 	this.velocityY = 0;
 	this.acc = 1.00;
 	
-	this.canvas = document.createElement("canvas");
-	this.ctx = this.canvas.getContext("2d");
-	this.ctx.canvas.width  = this.width * (cellSize + interCell);
-	this.ctx.canvas.height = this.height * (cellSize + interCell);
-	drawOn(this.ctx, this.image, 0, 0);
+	
 	
 	this.place = function(x, y){
 		this.X = x;
@@ -417,9 +424,10 @@ var Ball = function(){
 };
 //----------------------
 var Pipe = function(){
-	this.image = pipe;
-	this.image2 = pipe2;
-	this.image3 = pipeEdge;
+
+	this.image = readImg(pipe_img);
+	this.image2 = readImg(pipe2_img);
+	this.image3 = readImg(pipe_edge_img);
 	this.width = this.image3[0].length;
 	this.hole = 30;
 	this.pre_hole = 10;
@@ -471,6 +479,7 @@ var Pipe = function(){
 		this.X += this.velocityX * dt;
 		if(this.X + this.width < 0){
 			this.destroy = true;
+			delete this.canvas;
 		}
 	};
 	
@@ -561,7 +570,9 @@ Game.update = function() {
 };
 Game.draw = function() {
 	var t_start = Date.now();
-	renderer.clear();
+	
+	renderer.pre_render();
+	
 	for(var i =0; i < Game.pipes.length; i++){
 		var pipe = Game.pipes[i];
 		if(!pipe.destroy)
@@ -569,11 +580,11 @@ Game.draw = function() {
 	}
 	
 	Game.ball.draw();
-	drawString("" + Game.score, width/2, height/4);
+	renderer.renderString("" + Game.score, width/2, height/4);
 	if(game_over)
-		drawString("game over", width/2, height/2);
+		renderer.renderString("game over", width/2, height/2);
 	
-	//shown_ctx.drawImage(c2, 0, 0, c2.width, c2.height);	
+	renderer.post_render();
 	
 	var t_end = Date.now();
 	console.log((t_end-t_start)+"ms");
