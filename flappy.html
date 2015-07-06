@@ -255,27 +255,21 @@ var width = 100;
 var height = 150;
 var cellSize = 3;
 var interCell = 0;
+var color_transparent_opt = ' ';
+var color_opt = "#000000:0,#00660f:1,#fcfc00:2,#0ffcf0:4,#00fc00:5,#00cc00:3,#6666ff:7,#009900:9,#ff0000:r,#00ff00:g,#0000ff:b,#ffffff:w";
+var color_dict = {};
+
+var opts = color_opt.split(',');
+for(var i = 0; i < opts.length; i++){
+	var pair = opts[i].split(':');
+	color_dict[pair[1]] = pair[0];
+}
+
 function drawCell2(i, j, colChar){
 	if(i<0 || i>=height) return;
 	if(j<0 || j>=width-1) return;
-	var col;
-	switch(colChar){
-		case(' '): return;
-		case('0'): col = "#000000"; break;
-		case('1'): col = "#00660f"; break;
-		case('2'): col = "#fcfc00"; break;
-		case('3'): col = "#00cc00"; break;
-		case('9'): col = "#009900"; break;
-		case('4'): col = "#0ffcf0"; break;
-		case('5'): col = "#00fc00"; break;
-		case('7'): col = "#6666ff"; break;
-		case('r'): col = "#ff0000"; break;
-		case('g'): col = "#00ff00"; break;
-		case('b'): col = "#0000ff"; break;
-		case('w'): col = "#ffffff"; break;
-		default: col = "#ffffff"; break;
-	}
-	ctx.fillStyle = col;
+	if(colChar == color_transparent_opt) return;		
+	ctx.fillStyle = color_dict[colChar];
 	ctx.fillRect(0+j*(cellSize+interCell),0+i*(cellSize+interCell),cellSize,cellSize);
 }
 function draw(obj, x, y){
@@ -355,6 +349,9 @@ var Ball = function(){
 	this.draw = function(){
 		draw(this.image, this.X, this.Y);
 	};
+	this.pushUp = function(){
+		this.velocityY = - 9.8 * 8;
+	};
 };
 //----------------------
 var Pipe = function(){
@@ -425,21 +422,28 @@ var Pipe = function(){
 	}
 };
 //=====================================================
-$(document).keyup(function(e){
-	var checkWebkitandIE = (e.which==32 ? 1 : 0);
-    var checkMoz = (e.which==32 ? 1 : 0);
-	
-    if (checkWebkitandIE || checkMoz) console.log("space pressed");
-	
+function onSpacebarPush(){
 	if(!game_started){
 		game_started = true;
-		Game.ball.velocityY = - 9.8 * 8;
 	} else {
 		if(game_over){
 			game_over = false;
 			Game.init();
 		}
-		Game.ball.velocityY = - 9.8 * 8;
+	}	
+	Game.ball.pushUp();
+}
+
+$(document).on("tap",function(){
+   onSpacebarPush();
+});
+$(document).keyup(function(e){
+
+	var checkWebkitandIE = (e.keyCode==32 ? 1 : 0);
+    var checkMoz = (e.keyCode==32 ? 1 : 0);
+	
+    if (checkWebkitandIE || checkMoz) {	
+		onSpacebarPush();
 	}
 });
 //=====================================================
@@ -471,7 +475,6 @@ Game.update = function() {
 		}
 		if(pipe.passed(Game.ball)){
 			Game.score++;
-			console.log(Game.score);
 		}
 	}
 	if(game_started){
