@@ -812,30 +812,9 @@ Game.run = (function() {
 (function() {
 	var lbl = document.getElementById("lbl");
   var onEachFrame;
-  if(window.requestAnimationFrame) {
-	lbl.innerHTML = 'requestAnimationFrame';
-	onEachFrame = function(cb) {
-      var _cb = function() { cb(); requestAnimationFrame(_cb); }
-      _cb();
-    };
-  } else if (window.webkitRequestAnimationFrame) {
-	lbl.innerHTML = 'webkitRequestAnimationFrame';
-    onEachFrame = function(cb) {
-      var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
-      _cb();
-    };
-  } else if (window.mozRequestAnimationFrame) {
-	lbl.innerHTML = 'mozRequestAnimationFrame';
-    onEachFrame = function(cb) {
-      var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
-      _cb();
-    };
-  } else {
-	lbl.innerHTML = 'dedfault';
-    onEachFrame = function(cb) {
+  onEachFrame = function(cb) {
       setInterval(cb, 1000 / 30);
     }
-  }
   
   window.onEachFrame = onEachFrame;
 })();
