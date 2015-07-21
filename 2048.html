@@ -35,6 +35,34 @@
 		}
 	}
 	
+	function get_sum(g) {
+		var sum = 0;
+		var width = g[0].length;
+		var height = g.length;
+		for(var i = 0;i < height; i++){
+			for(var j = 0;j < width; j++){
+				var val = g[i][j];
+				sum += val;
+			}
+		}
+		return sum;
+	}
+	
+	function get_max(g){
+		var max = 2;
+		var width = g[0].length;
+		var height = g.length;
+		for(var i = 0;i < height; i++){
+			for(var j = 0;j < width; j++){
+				var val = g[i][j];
+				if(val >= max){
+					max = val;
+				}
+			}
+		}
+		return max;
+	}
+	
 	function new_game(){
 		var game = [];
 		for(var i=0;i<4;i++){
@@ -154,7 +182,7 @@
 		for(var i=0;i<g.length; i++){
 			out += '\r\n\r\n';
 			for(var j=0;j<g[0].length;j++){
-				var print = '__'
+				var print = '.'
 				if(g[i][j] > 0)
 					print = g[i][j];
 				out+='\t'+ print +'\t';
@@ -173,14 +201,21 @@
 	}
 	
 	function step(g) {
-		var count_free = count_free_cells(g);
-		console.log(count_free);
-		if(count_free == 0) {
+		var max = get_max(g);
+		if(max >= 2048) {
 			game_over = true;
-			field.text('\r\n\r\n\t\tGAME OVER\t\t');
+			field.text('\r\n\r\n\t\tVICTORY!\t\t');
 		} else {
-			random_seed(game, count_free); 
-			print(game);
+			var count_free = count_free_cells(g);
+			console.log(count_free);
+			if(count_free == 0) {
+				game_over = true;
+				var sum = get_sum(g);
+				field.text('\r\n\r\n\t\t GAME OVER\r\n\r\n\t\t Max: ' + max + '\r\n\r\n\t\t Score: ' + sum);
+			} else {
+				random_seed(game, count_free); 
+				print(game);
+			}
 		}
 	}
 	
