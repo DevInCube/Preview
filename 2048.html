@@ -1,0 +1,206 @@
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+</head>
+<body>
+	<pre id='field'>R</pre>
+<script>
+	
+	function count_free_cells(g) {
+		var count_free = 0;
+		for(var i=0;i<g.length; i++){
+			for(var j=0;j<g[0].length;j++){
+				var val = g[i][j];
+				if(val == 0)
+					count_free += 1;
+			}
+		}
+		return count_free;
+	}
+	
+	function random_seed(g, count_free){
+		var seed = 2;
+		if(Math.random()*10 < 2)
+			seed = 4;		
+		var pos = Math.floor(Math.random()*count_free);
+		for(var i=0;i<g.length; i++){
+			for(var j=0;j<g[0].length;j++){
+				var val = g[i][j];
+				if(val == 0){
+					if(pos == 0)
+						g[i][j] = seed;
+					pos--;
+				}
+			}
+		}
+	}
+	
+	function new_game(){
+		var game = [];
+		for(var i=0;i<4;i++){
+			game.push([0,0,0,0]);
+		}
+		random_seed(game, 4*4);
+		random_seed(game, 4*4-1);
+		return game;
+	}	
+	
+	function moveLeft(g){
+		for(var i=0;i<g.length; i++){
+			for(var j=1;j<g[i].length;j++){
+				var val = g[i][j];
+				if(val != 0){
+					g[i][j] = 0;
+					var added = false;
+					for(var k=j-1; k>=0; k--) {
+						if(g[i][k]!=0) {
+							if(g[i][k] == val) {
+								g[i][k] += val;								
+							}else{
+								g[i][k+1] = val;
+							}
+							added = true;
+							break;
+						}
+					}
+					if(!added)
+						g[i][0] = val;
+				}
+			}
+		}
+	}
+	
+	function moveRight(g){
+		var width = g[0].length;
+		for(var i=0;i<g.length; i++){
+			for(var j=width-2;j>=0;j--){
+				var val = g[i][j];
+				if(val != 0){
+					g[i][j] = 0;
+					var added = false;
+					for(var k=j+1; k<width; k++) {
+						if(g[i][k]!=0) {
+							if(g[i][k] == val) {
+								g[i][k] += val;								
+							}else{
+								g[i][k-1] = val;
+							}
+							added = true;
+							break;
+						}
+					}
+					if(!added)
+						g[i][width-1] = val;
+				}
+			}
+		}
+	}
+	
+	function moveUp(g){
+		for(var i=1;i<g.length; i++){
+			for(var j=0;j<g[i].length;j++){
+				var val = g[i][j];
+				if(val != 0){
+					g[i][j] = 0;
+					var added = false;
+					for(var k=i-1; k>=0; k--){
+						if(g[k][j]!=0) {
+							if(g[k][j] == val){
+								g[k][j] += val;
+								
+							}else{
+								g[k+1][j] = val;
+							}
+							added = true;
+							break;
+						}
+					}
+					if(!added)
+						g[0][j] = val;
+				}
+			}
+		}
+	}
+	
+	function moveDown(g){
+		var height = g.length;
+		for(var i=height-2;i>=0; i--){
+			for(var j=0;j<g[i].length;j++){
+				var val = g[i][j];
+				if(val != 0){
+					g[i][j] = 0;
+					var added = false;
+					for(var k=i+1; k<height; k++){
+						if(g[k][j]!=0) {
+							if(g[k][j] == val){
+								g[k][j] += val;
+								
+							}else{
+								g[k-1][j] = val;
+							}
+							added = true;
+							break;
+						}
+					}
+					if(!added)
+						g[height-1][j] = val;
+				}
+			}
+		}
+	}
+	
+	function render(g){
+		var out = "";
+		for(var i=0;i<g.length; i++){
+			out += '\r\n\r\n';
+			for(var j=0;j<g[0].length;j++){
+				var print = '__'
+				if(g[i][j] > 0)
+					print = g[i][j];
+				out+='\t'+ print +'\t';
+			}	
+			out+='\r\n\r\n';
+		}
+		return out;
+	}
+	
+	var game = null;
+	var game_over = false;
+	var field = $('#field');
+	
+	function print(g) {
+		field.text(render(game));
+	}
+	
+	function step(g) {
+		var count_free = count_free_cells(g);
+		console.log(count_free);
+		if(count_free == 0) {
+			game_over = true;
+			field.text('\r\n\r\n\t\tGAME OVER\t\t');
+		} else {
+			random_seed(game, count_free); 
+			print(game);
+		}
+	}
+	
+	$(document).ready(function(){
+		
+		game = new_game();
+		print(game);
+	});
+	
+	$(document).keydown(function(e){
+		if(!game_over) { 
+			switch(e.keyCode){
+				case(37):{ moveLeft(game); step(game); break;}
+				case(38):{ moveUp(game); step(game); break;}
+				case(39):{ moveRight(game); step(game); break;}
+				case(40):{ moveDown(game); step(game); break;}			
+				default: console.log(e.keyCode);
+			}
+		}
+	});
+</script>
+</body>
+</html>
