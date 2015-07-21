@@ -1,0 +1,107 @@
+<head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+	<style>
+		.container { margin-top: 20px; font-family: monospace; }
+	</style>
+</head>
+<body>
+<div class='container'>
+	<h1>Нормальний Алгоритм Маркова</h1>
+	<label>Input:</label>
+	<input id='input' class="form-control" value='bababa'/>
+	<br>
+	<label>NAM: <small>( -&gt;, +&gt; )</small></label>
+	<textarea id='algo' class="form-control" >ba-&gt;ab</textarea>
+	<label></label>
+	<div>
+		<button id='step_btn' class='btn btn-default'>Step</button>
+		<button id='run_btn' class='btn btn-default'>Run</button>
+	<div>
+	<br>
+	<label>Rules:</label>
+	<pre id='rules'></pre>
+	<label>History:</label>
+	<pre id='history'></pre>
+</div>
+
+<script>
+var step_btn = document.getElementById('step_btn');
+var run_btn = document.getElementById('run_btn');
+var input_el = document.getElementById('input');
+var algo_el = document.getElementById('algo');
+var rules_el = document.getElementById('rules');
+var history_el = document.getElementById('history');
+
+var rules = [];
+
+function compile(){
+	rules = [];
+	$(rules_el).text('');
+	var text = $(algo_el).val();
+	var lines = text.split('\n');
+	for(var i = 0; i < lines.length; i++){
+		var line = lines[i];
+		var rule = line.split("->");
+		if(rule.length == 1) {
+			rule = line.split("+>");
+			rule.push(true);
+		}
+		else {
+			rule.push(false);
+		}
+		rules.push(rule);
+		$(rules_el).text($(rules_el).text()+ i +". '"+rule[0]+"' "+((rule[2])?"+>":"->")+" '"+rule[1]+"'\r\n");
+	}
+}
+
+function add_history(h){
+	var val = $(history_el).text();
+	$(history_el).text(val + h + ' ');
+}
+
+function step(){
+	var index = -1;
+	var input = $(input_el).val();
+	if(input[input.length - 1] != ' ') input += ' ';
+	for(var i = 0; i < rules.length; i++){
+		var rule = rules[i];
+		if(rule[0] == '') {
+			input = rule[1] + input;
+			index = i;
+			break;
+		}
+		if(input.indexOf(rule[0]) > -1){
+			input = input.replace(rule[0], rule[1]);
+			index = i;
+			break;
+		}
+	}
+	$(input_el).val(input);
+	add_history(index);
+	return index;
+}
+
+$(step_btn).on('click', function(e) {
+	compile();
+	var index = step();
+	if(index < 0 || rules[index][2]) { 
+		alert('Finish');
+	}
+});
+
+$(run_btn).on('click', function(e){
+	console.log('step');
+	compile();
+	var counter = 0;
+	while((index = step()) > -1 && !rules[index][2]) { 
+		if(counter++ > 100) { 
+			alert('Interrupt'); 
+			return;
+		}
+	}
+	alert('Finish');
+});
+</script>
+</body>
