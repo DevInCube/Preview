@@ -18,14 +18,16 @@ TuringMachineStrip.prototype.move = function(dir) {
 	switch(dir) {
 		case('L'): {
 			this.caret_position -= 1;
-			if(this.caret_position == 0)
-				this.cells.unshift(' ');
+			if(this.caret_position == 0) {
+				this.cells.unshift(this.empty_symbol);
+				this.caret_position = 1;
+			}
 			break;
 		}
 		case('R'): {
 			this.caret_position += 1;
 			if(this.caret_position == this.cells.length - 1)
-				this.cells.push(' ');
+				this.cells.push(this.empty_symbol);
 			break;
 		}
 		case('N'):
@@ -36,14 +38,16 @@ TuringMachineStrip.prototype.move = function(dir) {
 TuringMachineStrip.prototype.setInput = function(inputValue) {
 	//@todo validate inputValue
 	this.cells = inputValue.split('');
-	this.cells.unshift(' ');
-	this.cells.push(' ');
+	this.cells.unshift(this.empty_symbol);
+	this.cells.push(this.empty_symbol);
 	this.caret_position = 1;
 };
 TuringMachineStrip.prototype.getOutput = function() {
 	var output = '';
 	for(var i = 0; i < this.cells.length; i++) {
-		output += this.cells[i];
+		var cellVal = this.cells[i];
+		if(cellVal != this.empty_symbol)
+			output += this.cells[i];
 	}
 	//@todo check for inner spaces, trim
 	return output;
@@ -57,6 +61,14 @@ var TuringMachine = function(states, init_state, transitions) {
 	this.stop_state = '!';
 	this.transitions = transitions;
 	this.stop = false;
+};
+
+TuringMachine.prototype.reset = function() {
+	var output = this.strip.getOutput();
+	this.stop = false;
+	this.strip.reset();
+	this.strip.setInput(output);
+	this.state = this.initial_state;
 };
 
 TuringMachine.prototype.setInput = function(inputValue) {
@@ -90,9 +102,16 @@ TuringMachine.prototype.step = function() {
 	var transition = this.getNextTransition();
 	if(transition) {
 		var command = transition.command;
-		this.strip.write(command.input);
-		this.strip.move(command.move_dir);
-		this.setState(command.new_state);
+		if(command.isEmpty()) {
+			this.stop = true;
+			return;
+		}
+		if(command.input)
+			this.strip.write(command.input);
+		if(command.move_dir)
+			this.strip.move(command.move_dir);
+		if(command.new_state)
+			this.setState(command.new_state);
 	}
 };
 

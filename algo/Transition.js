@@ -10,6 +10,9 @@ var TuringCommand = function(input, move_dir, new_state) {
 	this.move_dir = move_dir;
 	this.new_state = new_state;
 };
+TuringCommand.prototype.isEmpty = function() {
+	return !this.input && !this.move_dir && !this.new_state;
+};
 
 var TuringTransition = function(condition, command) {
 	
