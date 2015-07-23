@@ -1,8 +1,7 @@
 <head>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-	<script src="lib/sigma/sigma.min.js"></script>
-	<script src="lib/vis/vis.min.js"></script>		
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>	
+	<script src="../lib/vis.min.js"></script>		
 	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 	<style>
 		.container { margin-top: 20px; font-family: monospace; }
@@ -89,10 +88,7 @@ function step() {
 	}	
 	alert('Error! No such transition');
 }
-//sigma-----------------------------------
-//https://github.com/jacomyal/sigma.js/wiki
-//https://github.com/jacomyal/sigma.js/wiki/Graph-API
-var automata = null;
+//---------------------------------------
 var network = null;
 //----------------------------------------
 $(document).ready(function() {
