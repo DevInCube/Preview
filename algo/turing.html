@@ -1,0 +1,183 @@
+<head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="lib/sigma/sigma.min.js"></script>
+	<script src="lib/vis/vis.min.js"></script>		
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+	<style>
+		.container { margin-top: 20px; font-family: monospace; }
+		.canvas { width: 100%; }		
+		#container {
+			border: 2px solid lightgray;
+		    max-width: 570px;
+		    height: 300px;
+		    margin: auto;
+		}
+		textarea.form-control {
+		  	min-height: 100%;
+		}
+	</style>
+</head>
+<body>
+<div class='container'>
+	<h1>Turing</h1>	
+	<label>Transitions:</label>
+	<div class='row'>
+		<div class='col-md-6' style="height: 300px;">
+			<textarea id='algo' class="form-control"></textarea>
+		</div>
+		<div id="container" class='col-md-6'></div>
+	</div>
+	<label>Input:</label>
+	<input id='input' class="form-control" value='default'/>	
+	<br>
+	<div>
+		<button id='set_btn' class='btn btn-default'>Set</button>
+		<button id='step_btn' class='btn btn-default'>Step</button>
+		<button id='run_btn' class='btn btn-default'>Run</button>
+	<div>
+	<canvas id='canvas'></canvas>
+	<br>
+	<!--
+	<label>Rules:</label>
+	<pre id='rules'></pre>
+	<label>History:</label>
+	<pre id='history'></pre>-->
+</div>
+<script src="TuringStrip.js"></script>
+<script>
+	
+var turing = null;
+	
+var set_btn = document.getElementById('set_btn');
+var step_btn = document.getElementById('step_btn');
+var run_btn = document.getElementById('run_btn');
+var input_el = document.getElementById('input');
+var algo_el = document.getElementById('algo');
+var rules_el = document.getElementById('rules');
+var history_el = document.getElementById('history');
+var rules = [];
+
+function compile(){
+	rules = [];	
+	$(rules_el).text('');
+	var text = $(algo_el).val();
+	var lines = text.split('\n');
+	for(var i = 0; i < lines.length; i++) {
+		var line = lines[i];
+		if(line == '') continue;
+		var transition = parseTransition(line);	
+		rules.push(transition);		
+		//$(rules_el).text($(rules_el).text()+ i +". '"+rule[0]+"' "+((rule[2])?"+>":"->")+" '"+rule[1]+"'\r\n");
+	}
+}
+function add_history(h){
+	var val = $(history_el).text();
+	$(history_el).text(val + h + ' ');
+}
+function step() {
+	if(turing.stop)
+		return;
+	for(var i = 0; i < rules.length; i++) {
+		var transition = rules[i];
+		if(turing.check(transition.condition)) {
+			turing.apply(transition.command);
+			network.selectNodes([turing.state], false);	
+			//network.selectEdges([turing.state + turing.get_current()]); //@todo		
+			return;
+		}
+	}	
+	alert('Error! No such transition');
+}
+//sigma-----------------------------------
+//https://github.com/jacomyal/sigma.js/wiki
+//https://github.com/jacomyal/sigma.js/wiki/Graph-API
+var automata = null;
+var network = null;
+//----------------------------------------
+$(document).ready(function() {
+	turing = new TuringStrip('canvas');
+	turing.draw();
+	
+	//automata = new sigma('container');	
+	
+	$(input_el).val('hello.');
+	$(algo_el).val('q0,h->H,R,q0\nq0,e->E,R,q0\nq0,l->L,R,q0\nq0,o->O,R,q0\nq0,.->!,R,q1\nq1, -> ,L,!');
+	//init machine	
+});
+$(set_btn).on('click', function(e) {
+	compile();
+	
+	var states = { '!': [] };
+	for(var i = 0; i < rules.length; i++) {
+		var rule = rules[i];
+		var state = rule.condition.state;
+		if(!states.hasOwnProperty(state)) 
+			states[state] = [];
+		states[state].push({ 'state': rule.command.new_state, 'value': rule.condition.value });
+	}
+	
+	var nodes = [];
+	var edges = [];
+	for(var key in states) {
+		var node = { 
+			'id': key, 
+			'label': key,
+			font: {
+				size: 18,
+			},
+			color: {
+				highlight: { background: 'yellow' },
+			},				
+		};
+		if(node.label == '!') {
+			node['color']['background'] = '#faa';
+		}
+		nodes.push(node);
+		var self_count = 10;
+		for(var i = 0; i < states[key].length; i++) {
+			var edge = states[key][i];
+			if(edge['state'] == key) 
+				self_count += 10;
+			var text = edge['value'];
+			if(text == ' ') 
+				text = '<blank>';
+			edges.push({ 
+				id: key + text,				
+				'from': key, 
+				'to': edge.state,
+				'label': text,  
+				'title': text, 
+				'arrows': "to",						
+				'selfReferenceSize': self_count
+			});
+		}		
+	}	
+	
+	// create a network
+	var container = document.getElementById('container');
+	var data = {
+		nodes: new vis.DataSet(nodes),
+		edges: new vis.DataSet(edges)
+	};
+	console.log(data);
+	var options = { };
+	network = new vis.Network(container, data, options);
+	
+	turing.reset();
+	turing.setState('q0');
+	turing.setInput($(input_el).val());	
+	
+	network.selectNodes([turing.state], false);
+	turing.draw();
+});
+$(step_btn).on('click', function(e) {	
+	step();	
+});
+$(run_btn).on('click', function(e){	
+	while(!turing.stop) { 		
+		step();
+	}	
+});
+</script>
+</body>
