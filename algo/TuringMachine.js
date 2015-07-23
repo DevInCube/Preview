@@ -24,7 +24,7 @@ TuringMachineStrip.prototype.move = function(dir) {
 		}
 		case('R'): {
 			this.caret_position += 1;
-			if(this.caret_position == this.strip.length - 1)
+			if(this.caret_position == this.cells.length - 1)
 				this.cells.push(' ');
 			break;
 		}
@@ -54,7 +54,7 @@ var TuringMachine = function(states, init_state, transitions) {
 	this.strip = new TuringMachineStrip();
 	this.states = states;
 	this.initial_state = init_state;
-	this.stop_state = 'STOP';
+	this.stop_state = '!';
 	this.transitions = transitions;
 	this.stop = false;
 };
@@ -71,12 +71,19 @@ TuringMachine.prototype.getNextTransition = function() {
 			var transition = this.transitions[i];
 			var condition = transition.condition;
 			if((this.state == condition.state) 
-				&& (this.strip.get_current() == condition.value)) {	
+				&& (this.strip.read() == condition.value)) {	
 				return transition;
 			}
 		}	
 	}
 	return null;
+};
+
+TuringMachine.prototype.setState = function(new_state) {
+	//@todo validate state
+	this.state = new_state;
+	if(new_state == this.stop_state)
+		this.stop = true;
 };
 
 TuringMachine.prototype.step = function() {

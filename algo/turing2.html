@@ -1,0 +1,162 @@
+<head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>	
+	<script src="../lib/vis.min.js"></script>
+	<script src="Transition.js"></script>
+	<script src="TuringMachine.js"></script>
+	<script src="TuringMachineCanvas.js"></script>
+	<script src="task.js"></script>
+	<style>
+		.container { margin-top: 20px; font-family: monospace; }
+		.canvas { width: 100%; }		
+		#container {
+			border: 2px solid lightgray;
+		    max-width: 570px;
+		    height: 300px;
+		    margin: auto;
+		}
+		textarea.form-control {
+		  	min-height: 100%;
+		}
+	</style>
+</head>
+<body>
+<div class='container'>
+	<h1>Turing</h1>	
+	<label>Transitions:</label>
+	<div class='row'>
+		<div class='col-md-6' style="height: 300px;">
+			<textarea id='algo' class="form-control"></textarea>
+		</div>
+		<div id="container" class='col-md-6'></div>
+	</div>
+	<label>Input:</label>
+	<input id='input' class="form-control" value='default'/>	
+	<br>
+	<div>
+		<button id='set_btn' class='btn btn-default'>Set</button>
+		<button id='step_btn' class='btn btn-default'>Step</button>
+		<button id='run_btn' class='btn btn-default'>Run</button>
+	<div>
+	<canvas id='canvas'></canvas>
+	<br>
+	<!--
+	<label>Rules:</label>
+	<pre id='rules'></pre>
+	<label>History:</label>
+	<pre id='history'></pre>-->
+</div>
+<script>
+	
+var set_btn = document.getElementById('set_btn');
+var step_btn = document.getElementById('step_btn');
+var run_btn = document.getElementById('run_btn');
+var input_el = document.getElementById('input');
+var algo_el = document.getElementById('algo');
+var rules_el = document.getElementById('rules');
+var history_el = document.getElementById('history');
+
+function setTask(task_id) {
+	var task = tasks[task_id];
+	$(input_el).val(task.input);
+	$(algo_el).val(task.program);
+}
+//---------------------------------------
+var machine = null;
+var machineCanvas = null;
+var network = null;
+//---------------------------------------
+$(document).ready(function() {
+	machineCanvas = new TuringMachineCanvas('canvas');	
+	
+	setTask('hello');
+});
+$(set_btn).on('click', function(e) {
+	var algo_text = $(algo_el).val();
+	var transitions = parseTransitions(algo_text);
+	
+	machine = new TuringMachine([], 'q0', transitions);
+	machineCanvas.setMachine(machine);
+	
+	var states = { };
+	states[machine.stop_state] = [];
+	for(var i = 0; i < transitions.length; i++) {
+		var rule = transitions[i];
+		var state = rule.condition.state;
+		if(!states.hasOwnProperty(state)) 
+			states[state] = [];
+		states[state].push({ 'state': rule.command.new_state, 'value': rule.condition.value });
+	}
+	
+	var nodes = [];
+	var edges = [];
+	for(var key in states) {
+		var node = { 
+			'id': key, 
+			'label': key,
+			font: {
+				size: 18,
+			},
+			color: {
+				highlight: { background: 'yellow' },
+			},				
+		};
+		if(node.label == machine.stop_state) {
+			node['color']['background'] = '#faa';
+		}
+		nodes.push(node);
+		var self_count = 10;
+		for(var i = 0; i < states[key].length; i++) {
+			var edge = states[key][i];
+			if(edge['state'] == key) 
+				self_count += 10;
+			var text = edge['value'];
+			if(text == ' ') 
+				text = '<blank>';
+			edges.push({ 
+				id: key + text,				
+				'from': key, 
+				'to': edge.state,
+				'label': text,  
+				'title': text, 
+				'arrows': "to",						
+				'selfReferenceSize': self_count
+			});
+		}		
+	}	
+	
+	// create a network
+	var container = document.getElementById('container');
+	var data = {
+		nodes: new vis.DataSet(nodes),
+		edges: new vis.DataSet(edges)
+	};
+	console.log(data);
+	var options = { };
+	network = new vis.Network(container, data, options);
+	
+	machine.setState(machine.initial_state);
+	machine.setInput($(input_el).val());	
+	
+	network.selectNodes([machine.state], false);
+	machineCanvas.draw();
+});
+$(step_btn).on('click', function(e) {	
+	if(machine) {
+		machine.step();
+	}
+	machineCanvas.draw();
+	network.selectNodes([machine.state], false);
+});
+$(run_btn).on('click', function(e){	
+	if(machine) {
+		while(!machine.stop) { 		
+			machine.step();
+		}	
+		machineCanvas.draw();
+		network.selectNodes([machine.state], false);
+	}
+});
+</script>
+</body>
