@@ -1,0 +1,11 @@
+.container { margin-top: 20px; font-family: monospace; }
+.canvas { width: 100%; }		
+#container {
+	border: 2px solid lightgray;
+    max-width: 570px;
+    height: 300px;
+    margin: auto;
+}
+textarea.form-control {
+  	min-height: 100%;
+}

@@ -1,7 +1,7 @@
-var TuringMachineStrip = function() { 
-	this.empty_symbol = ' ';
+var TuringMachineStrip = function() { 	
 	this.reset();	
 };
+TuringMachineStrip.prototype.empty_symbol = ' ';
 TuringMachineStrip.prototype.reset = function() {
 	this.cells = [this.empty_symbol, this.empty_symbol, this.empty_symbol];
 	this.caret_position = 1;
@@ -17,6 +17,10 @@ TuringMachineStrip.prototype.read = function() {
 TuringMachineStrip.prototype.move = function(dir) {
 	switch(dir) {
 		case('L'): {
+			if((this.caret_position == this.cells.length - 2)
+				&& (this.read() == this.empty_symbol)) {
+				this.cells.pop();
+			}				
 			this.caret_position -= 1;
 			if(this.caret_position == 0) {
 				this.cells.unshift(this.empty_symbol);
@@ -25,6 +29,11 @@ TuringMachineStrip.prototype.move = function(dir) {
 			break;
 		}
 		case('R'): {
+			if((this.caret_position == 1)
+				&& (this.read() == this.empty_symbol)) {
+				this.cells.shift();
+				this.caret_position = 0;
+			}
 			this.caret_position += 1;
 			if(this.caret_position == this.cells.length - 1)
 				this.cells.push(this.empty_symbol);
@@ -57,11 +66,12 @@ var TuringMachine = function(states, init_state, transitions) {
 	
 	this.strip = new TuringMachineStrip();
 	this.states = states;
-	this.initial_state = init_state;
-	this.stop_state = '!';
+	this.initial_state = init_state;	
 	this.transitions = transitions;
 	this.stop = false;
 };
+
+TuringMachine.prototype.stop_state = '!';
 
 TuringMachine.prototype.reset = function() {
 	var output = this.strip.getOutput();
@@ -112,7 +122,9 @@ TuringMachine.prototype.step = function() {
 			this.strip.move(command.move_dir);
 		if(command.new_state)
 			this.setState(command.new_state);
+		return true;
 	}
+	return false;
 };
 
 TuringMachine.prototype.getStrip = function() {

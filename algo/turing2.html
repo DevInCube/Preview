@@ -2,24 +2,8 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>	
-	<script src="../lib/vis.min.js"></script>
-	<script src="Transition.js"></script>
-	<script src="TuringMachine.js"></script>
-	<script src="TuringMachineCanvas.js"></script>
-	<script src="task.js"></script>
-	<style>
-		.container { margin-top: 20px; font-family: monospace; }
-		.canvas { width: 100%; }		
-		#container {
-			border: 2px solid lightgray;
-		    max-width: 570px;
-		    height: 300px;
-		    margin: auto;
-		}
-		textarea.form-control {
-		  	min-height: 100%;
-		}
-	</style>
+	<script src="../lib/vis.min.js"></script>	
+	<link rel="stylesheet" type="text/css" href="turing.css" />
 </head>
 <body>
 <div class='container'>
@@ -42,12 +26,13 @@
 	<div>
 	<canvas id='canvas'></canvas>
 	<br>
-	<!--
-	<label>Rules:</label>
-	<pre id='rules'></pre>
-	<label>History:</label>
-	<pre id='history'></pre>-->
+	<h4>Tasks:</h4>
+	<ul id='tasks'></ul>
 </div>
+<script src="Transition.js"></script>
+<script src="TuringMachine.js"></script>
+<script src="TuringMachineCanvas.js"></script>
+<script src="task.js"></script>
 <script>
 	
 var set_btn = document.getElementById('set_btn');
@@ -56,8 +41,7 @@ var step_btn = document.getElementById('step_btn');
 var run_btn = document.getElementById('run_btn');
 var input_el = document.getElementById('input');
 var algo_el = document.getElementById('algo');
-var rules_el = document.getElementById('rules');
-var history_el = document.getElementById('history');
+var tasks_el = document.getElementById('tasks');
 
 function setTask(task_id) {
 	var task = tasks[task_id];
@@ -68,26 +52,10 @@ function setTask(task_id) {
 var machine = null;
 var machineCanvas = null;
 var network = null;
-//---------------------------------------
-$(document).ready(function() {
-	machineCanvas = new TuringMachineCanvas('canvas');	
-	
-	setTask('inc10');
-});
-$(reset_btn).on('click', function(e) {
-	if(machine)
-		machine.reset();
-	machineCanvas.draw();
-});
-$(set_btn).on('click', function(e) {
-	var algo_text = $(algo_el).val();
-	var transitions = parseTransitions(algo_text);
-	
-	machine = new TuringMachine([], 'q0', transitions);
-	machineCanvas.setMachine(machine);
-	
+
+function compileStates(transitions) {
 	var states = { };
-	states[machine.stop_state] = [];
+	states[TuringMachine.prototype.stop_state] = [];
 	for(var i = 0; i < transitions.length; i++) {
 		var rule = transitions[i];
 		var state = rule.condition.state;
@@ -95,7 +63,10 @@ $(set_btn).on('click', function(e) {
 			states[state] = [];
 		states[state].push({ 'state': rule.command.new_state, 'value': rule.condition.value });
 	}
-	
+	return states;
+}
+
+function buildNetworkData(states) {
 	var nodes = [];
 	var edges = [];
 	for(var key in states) {
@@ -111,6 +82,7 @@ $(set_btn).on('click', function(e) {
 		};
 		if(node.label == machine.stop_state) {
 			node['color']['background'] = '#faa';
+			node['fixed'] = true;
 		}
 		nodes.push(node);
 		var self_count = 10;
@@ -125,46 +97,131 @@ $(set_btn).on('click', function(e) {
 				text = '<blank>';
 			edges.push({ 
 				id: key + text,				
-				'from': key, 
-				'to': edge.state,
-				'label': text,  
-				'title': text, 
-				'arrows': "to",						
-				'selfReferenceSize': self_count
+				from: key, 
+				to: edge.state,
+				label: text,  
+				title: text, 
+				arrows: "to",						
+				selfReferenceSize: self_count
 			});
 		}		
 	}	
-	
-	// create a network
-	var container = document.getElementById('container');
 	var data = {
 		nodes: new vis.DataSet(nodes),
 		edges: new vis.DataSet(edges)
 	};
-	console.log(data);
-	var options = { };
+	return data;
+}
+
+function getNetworkOptions() {
+	var options = { 
+		nodes: {
+			color: {
+				border: 'steelblue',
+			},
+		},
+		physics: {
+    		enabled: true,	
+			repulsion: {
+				centralGravity: 0,
+				springConstant: 0.2,
+				damping: 0.3,
+			},
+			solver : 'repulsion',
+		},
+		edges: {
+			color: {
+				color: 'steelblue',
+				highlight: 'lightsteelblue',
+			},
+			length: 200,
+			smooth: {
+				enabled: true,				
+				type: 'dynamic',
+			},			
+		},
+		layout: {
+			hierarchical: { enabled: false, }
+		}
+	};
+	return options;
+}
+
+function updateNetwork(){
+	network.selectNodes([machine.state], false);
+}
+function onTaskLinkClick(e) {
+	var task_id = e.target.getAttribute('task_id');
+	setTask(task_id);
+	$(set_btn).click();
+}
+//---------------------------------------
+$(document).ready(function() {
+	machineCanvas = new TuringMachineCanvas('canvas');	
+	machineCanvas.draw();
+	setTask('inc10');
+	
+	for(var task_id in tasks) {
+		var item = document.createElement('li');
+		var link = document.createElement('a');
+		link.setAttribute('task_id', task_id);
+		link.setAttribute('href', '#');
+		link.innerHTML = task_id;
+		$(link).on('click', onTaskLinkClick);
+		item.appendChild(link);
+		tasks_el.appendChild(item);
+	}	
+});
+$(reset_btn).on('click', function(e) {
+	if(machine)
+		machine.reset();
+	network.selectNodes([machine.state], false);
+	machineCanvas.draw();
+});
+$(set_btn).on('click', function(e) {
+	var algo_text = $(algo_el).val();
+	var transitions = parseTransitions(algo_text);
+	
+	var states = compileStates(transitions);
+	var keys = [];
+	for(var state in states) keys.push(state);
+	
+	machine = new TuringMachine(keys, keys[1], transitions);
+	machineCanvas.setMachine(machine);
+	
+	var data = buildNetworkData(states);
+	
+	// create a network
+	var container = document.getElementById('container');	
+	var options = getNetworkOptions();
 	network = new vis.Network(container, data, options);
 	
 	machine.setState(machine.initial_state);
 	machine.setInput($(input_el).val());	
 	
-	network.selectNodes([machine.state], false);
+	updateNetwork();
 	machineCanvas.draw();
 });
 $(step_btn).on('click', function(e) {	
 	if(machine) {
-		machine.step();
+		var res = machine.step();
+		if(!res) 
+			alert('No such state');
 	}
 	machineCanvas.draw();
-	network.selectNodes([machine.state], false);
+	updateNetwork();
 });
 $(run_btn).on('click', function(e){	
 	if(machine) {
 		while(!machine.stop) { 		
-			machine.step();
+			var res = machine.step();
+			if(!res) {
+				alert('No such state');
+				break;
+			}
 		}	
 		machineCanvas.draw();
-		network.selectNodes([machine.state], false);
+		updateNetwork();
 	}
 });
 </script>
