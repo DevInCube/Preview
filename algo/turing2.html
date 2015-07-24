@@ -219,6 +219,10 @@ $(run_btn).on('click', function(e){
 				alert('No such state');
 				break;
 			}
+			if(machine.strip.cells.length > 100) {
+				alert('Maximum strip length = 100');
+				break;
+			}
 		}	
 		machineCanvas.draw();
 		updateNetwork();

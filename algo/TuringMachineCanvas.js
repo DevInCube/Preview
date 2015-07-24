@@ -12,6 +12,8 @@ var TuringMachineCanvas = function(canvas_id) {
 	this.canvas.height = 200;
 	
 	this.ctx = this.canvas.getContext('2d');	
+	
+	this.font_size = 32;
 };
 
 TuringMachineCanvas.prototype.setMachine = function(machine) {
@@ -25,7 +27,17 @@ TuringMachineCanvas.prototype.draw = function() {
 	var height = this.canvas.height;
 	if(this.machine) {		
 		
-		var length = this.machine.strip.cells.length;		
+		var length = this.machine.strip.cells.length;
+		if(length > 10) {
+			cell_size = 40 - (length - 10) * 0.5;
+			if(cell_size < 10) cell_size = 10;
+			this.font_size = 32 - (length - 10) * 0.5;			
+			if(this.font_size < 12) this.font_size = 12;
+		} else {
+			cell_size = 40;
+			cell_border = 2;
+			this.font_size = 32;
+		}	
 		var strip_width = length * cell_size;
 		
 		var start_x = (width - strip_width) / 2;
@@ -55,7 +67,7 @@ TuringMachineCanvas.prototype.draw = function() {
 		var ctx = this.ctx;	
 		var text = 'No machine';
 		ctx.fillStyle = '#000000';
-		var font_size = 36;
+		var font_size = this.font_size + 4;
 		ctx.font = font_size + "px Courier";
 		ctx.textAlign = 'left';
 		ctx.textBaseline = 'top';
@@ -79,13 +91,12 @@ TuringMachineCanvas.prototype.drawStripCell = function(x, y, value) {
 	this.drawEmptyCell(x, y, cell_size, 1);
 	var ctx = this.ctx;
 	
-	ctx.fillStyle = '#000000';
-	var font_size = 32;
-	ctx.font = font_size + "px Courier";
+	ctx.fillStyle = '#000000';	
+	ctx.font = this.font_size + "px Courier";
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'top';
 	var text_size = ctx.measureText(value);	
-	ctx.fillText(value, x + (cell_size - text_size.width) / 2 , y  +  (cell_size - font_size) / 2 );
+	ctx.fillText(value, x + (cell_size - text_size.width) / 2 , y  +  (cell_size - this.font_size) / 2 );
 }
 
 TuringMachineCanvas.prototype.drawMachine = function(x, y) {
@@ -103,7 +114,7 @@ TuringMachineCanvas.prototype.drawMachine = function(x, y) {
 	ctx.stroke();
 	
 	ctx.fillStyle = '#000000';
-	var font_size = 22;
+	var font_size = this.font_size - 10;
 	ctx.font = font_size + "px Courier bold";
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'top';
