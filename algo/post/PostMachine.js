@@ -100,11 +100,14 @@ PostMachine.prototype.reset = function() {
 	}
 };
 PostMachine.prototype.apply = function(command) {
+	var next_index = this.rule_index + 1;
+	if(command.args.length > 0)
+		next_index = command.args[0];
 	switch(command.type) {
-		case("<") : { this.moveLeftAndGoto(command.args[0]); break; }
-		case(">") : { this.moveRightAndGoto(command.args[0]); break; }
-		case("1") : { this.setAndGoto(command.args[0]); break; }
-		case("0") : { this.unsetAndGoto(command.args[0]); break; }
+		case("<") : { this.moveLeftAndGoto(next_index); break; }
+		case(">") : { this.moveRightAndGoto(next_index); break; }
+		case("1") : { this.setAndGoto(next_index); break; }
+		case("0") : { this.unsetAndGoto(next_index); break; }
 		case("?") : { this.checkEmptyAndGoto(command.args[0], command.args[1]); break; }
 		case("!") : { this.stopCommand(); break; }
 		default:
