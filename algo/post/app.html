@@ -1,0 +1,209 @@
+<head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>	
+	<script src="../../lib/vis.min.js"></script>	
+	<link rel="stylesheet" type="text/css" href="app.css" />
+</head>
+<body>
+<div class='container'>
+	<h1>Post Machine</h1>	
+	<label>Transitions:</label>
+	<div class='row'>
+		<div class='col-md-6' style="height: 300px;">
+			<textarea id='algo' class="form-control"></textarea>
+		</div>
+		<div id="container" class='col-md-6'></div>
+	</div>
+	<label>Input:</label>
+	<input id='input' class="form-control" value='default'/>	
+	<br>
+	<div>
+		<button id='set_btn' class='btn btn-default'>Set</button>
+		<button id='step_btn' class='btn btn-default'>Step</button>
+		<button id='run_btn' class='btn btn-default'>Run</button>
+	<div>
+	<canvas id='canvas'></canvas>
+	<br>
+	<h4>Tasks:</h4>
+	<ul id='tasks'></ul>
+</div>
+<script src="app.js"></script>
+<script src="PostMachine.js"></script>
+<script src="PostMachineCanvas.js"></script>
+<script src="task.js"></script>
+<script>
+	
+var set_btn = document.getElementById('set_btn');
+var step_btn = document.getElementById('step_btn');
+var run_btn = document.getElementById('run_btn');
+var input_el = document.getElementById('input');
+var algo_el = document.getElementById('algo');
+var tasks_el = document.getElementById('tasks');
+
+function setTask(task_id) {
+	var task = tasks[task_id];
+	$(input_el).val(task.input);
+	$(algo_el).val(task.program);
+}
+//---------------------------------------
+var machine = null;
+var machineCanvas = null;
+var network = null;
+
+function compileStates(transitions) {
+	var states = { };
+	states[TuringMachine.prototype.stop_state] = [];
+	for(var i = 0; i < transitions.length; i++) {
+		var rule = transitions[i];
+		var state = rule.condition.state;
+		if(!states.hasOwnProperty(state)) 
+			states[state] = [];
+		states[state].push({ 'state': rule.command.new_state, 'value': rule.condition.value });
+	}
+	return states;
+}
+
+function buildNetworkData(states) {
+	var nodes = [];
+	var edges = [];
+	for(var key in states) {
+		var node = { 
+			'id': key, 
+			'label': key,
+			font: {
+				size: 18,
+			},
+			color: {
+				highlight: { background: 'yellow' },
+			},				
+		};
+		if(node.label == machine.stop_state) {
+			node['color']['background'] = '#faa';
+			node['fixed'] = true;
+		}
+		nodes.push(node);
+		var self_count = 10;
+		for(var i = 0; i < states[key].length; i++) {
+			var edge = states[key][i];
+			if(!edge.state) 
+				edge.state = key;
+			if(edge.state == key) 
+				self_count += 10;
+			var text = edge['value'];
+			if(text == ' ') 
+				text = '<blank>';
+			edges.push({ 
+				id: key + text,				
+				from: key, 
+				to: edge.state,
+				label: text,  
+				title: text, 
+				arrows: "to",						
+				selfReferenceSize: self_count
+			});
+		}		
+	}	
+	var data = {
+		nodes: new vis.DataSet(nodes),
+		edges: new vis.DataSet(edges)
+	};
+	return data;
+}
+
+function getNetworkOptions() {
+	var options = { 
+		nodes: {
+			color: {
+				border: 'steelblue',
+			},
+		},
+		physics: {
+    		enabled: true,	
+			repulsion: {
+				centralGravity: 0,
+				springConstant: 0.2,
+				damping: 0.3,
+			},
+			solver : 'repulsion',
+		},
+		edges: {
+			color: {
+				color: 'steelblue',
+				highlight: 'lightsteelblue',
+			},
+			length: 200,
+			smooth: {
+				enabled: true,				
+				type: 'dynamic',
+			},			
+		},
+		layout: {
+			hierarchical: { enabled: false, }
+		}
+	};
+	return options;
+}
+
+function onTaskLinkClick(e) {
+	var task_id = e.target.getAttribute('task_id');
+	setTask(task_id);
+	$(set_btn).click();
+}
+function loadTasks() {
+	
+	for(var task_id in tasks) {
+		var item = document.createElement('li');
+		var link = document.createElement('a');
+		link.setAttribute('task_id', task_id);
+		link.setAttribute('href', '#');
+		link.innerHTML = task_id;
+		$(link).on('click', onTaskLinkClick);
+		item.appendChild(link);
+		tasks_el.appendChild(item);
+	}	
+}
+//---------------------------------------
+$(document).ready(function() {
+	machineCanvas = new PostMachineCanvas('canvas');	
+	machineCanvas.draw();
+	loadTasks();
+	setTask('move');	
+});
+$(set_btn).on('click', function(e) {
+	var algo_text = $(algo_el).val();
+	var rules = PostCommand.prototype.parseCommands(algo_text);	
+	
+	machine = new PostMachine(rules);
+	machineCanvas.setMachine(machine);
+
+	machine.setInput($(input_el).val());	
+	
+	machineCanvas.draw();
+});
+$(step_btn).on('click', function(e) {	
+	if(machine) {
+		var res = machine.step();
+//		if(!res) 
+//			alert('Finished');
+	}
+	machineCanvas.draw();
+});
+$(run_btn).on('click', function(e){	
+	if(machine) {
+		while(!machine.stop) { 		
+			var res = machine.step();
+			/*if(!res) {
+				alert('No such state');
+				break;
+			}
+			if(machine.stop) {
+				alert('Maximum strip length = 100');
+				break;
+			}*/
+		}	
+		machineCanvas.draw();
+	}
+});
+</script>
+</body>
