@@ -22,6 +22,7 @@
 		<button id='set_btn' class='btn btn-default'>Set</button>
 		<button id='step_btn' class='btn btn-default'>Step</button>
 		<button id='run_btn' class='btn btn-default'>Run</button>
+		<button id='reset_btn' class='btn btn-default'>Reset</button>
 	<div>
 	<canvas id='canvas'></canvas>
 	<br>
@@ -35,6 +36,7 @@
 <script>
 	
 var set_btn = document.getElementById('set_btn');
+var reset_btn = document.getElementById('reset_btn');
 var step_btn = document.getElementById('step_btn');
 var run_btn = document.getElementById('run_btn');
 var input_el = document.getElementById('input');
@@ -169,6 +171,12 @@ $(document).ready(function() {
 	machineCanvas.draw();
 	loadTasks();
 	setTask('move');	
+});
+$(reset_btn).on('click', function(e) {
+	if(machine) {
+		machine.reset();
+		machineCanvas.draw();
+	}
 });
 $(set_btn).on('click', function(e) {
 	var algo_text = $(algo_el).val();

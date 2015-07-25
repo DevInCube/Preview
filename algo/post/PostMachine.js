@@ -53,7 +53,13 @@ PostMachine.prototype.setInput = function(str) {
 		bools.push(str[i] == '1');
 	}
 	this.strip.setInput(bools);
-	this.strip.moveLeft();
+};
+PostMachine.prototype.getOutput = function() {
+	var str = '';
+	for(var i = 1; i < this.strip.cells.length - 1; i++) {
+		str += this.strip.cells[i] ? '1' : '0';
+	}
+	return str;
 };
 
 PostMachine.prototype.setAndGoto = function(index) {
@@ -85,6 +91,13 @@ PostMachine.prototype.step = function() {
 	if(this.stop) return false;
 	this.apply(this.rules[this.rule_index]);
 	return !this.stop; 
+};
+PostMachine.prototype.reset = function() {
+	if(this.stop) {
+		this.stop = false;
+		this.rule_index = 0;
+		this.setInput(this.getOutput());
+	}
 };
 PostMachine.prototype.apply = function(command) {
 	switch(command.type) {
