@@ -8,10 +8,11 @@ VigenereBreaker.prototype.break = function(cipher) {
 	var probable_key_length_list = this.key_analyst(cipher);
 	var key_length = parseInt(probable_key_length_list[0]);
 	var key = this.getKey(cipher, key_length);
+	Logger.debug(key);
 	var encoder = new VigenereEncoder();
 	encoder.alphabet = this.alphabet;
 	var message = encoder.decode(cipher, key);
-	return message;
+	return {'message': message, 'key': key};
 };
 
 VigenereBreaker.prototype.getKey = function(cipher, key_length) {
@@ -19,17 +20,18 @@ VigenereBreaker.prototype.getKey = function(cipher, key_length) {
 	for(var i = 0; i < key_length; i++) {
 		var periodText = getEveryChar(cipher, i, key_length);
 		var freq = getCharsFrequencies(periodText, this.alphabet);
-		key += getChar(freq, this.alphabet.length);
+		key += getChar(freq, this.alphabet);
 	}
 	return key;
 };
 
-function getChar(data, alpha_length) {	
+function getChar(data, alpha) {
+	var eng_freq = getEnglishFrequencies();	
 	var min = Number.MAX_SAFE_INTEGER;
 	var min_index = -1;
-	for(var i = 0; i < alpha_length; i++) {
+	for(var i = 0; i < alpha.length; i++) {
 		var data2 = shiftedData(data, i);
-		var chi2 = getChi2Critical(data2, eng_freq);
+		var chi2 = getChi2Critical(data2, eng_freq);		
 		if(chi2 < min) {
 			min = chi2;
 			min_index = i;

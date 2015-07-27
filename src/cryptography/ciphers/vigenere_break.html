@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Шифр Віженера</title>
+	<title>Взлом шифру Віженера</title>
 	<meta charset="UTF-8">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
@@ -15,18 +15,15 @@
 </head>
 <body>
 <div class='container'>
-	<h1>Шифр Віженера</h1>
+	<h1>Взлом шифру Віженера</h1>		
+	<label>Cipher:</label>
+	<input id='msg' class="form-control" value=''/>
 	<label>Alphabet:</label>
 	<input id='alpha' class="form-control" value=''/>
-	<label>Key:</label>
-	<input id='key' type="text" class="form-control" value=''/>
-	<label>Message:</label>
-	<input id='msg' class="form-control" value=''/>
-	<button id='encode-btn' class='btn btn-default'>Encode</button>
-	<button id='decode-btn' class='btn btn-default'>Decode</button>
-	<button id='attack-btn' class='btn btn-default'>Attack</button>
-	<input id='show-table' type='checkbox' />Show table<br>
+	<button id='attack-btn' class='btn btn-default'>Attack</button>	
 	<br>
+	<label>Key:</label>
+	<input id='key' class="form-control" value=''/>
 	<label>Output message:</label>
 	<input id='outmsg' class="form-control" value=''/>
 	<label>Encoding table:</label>
@@ -50,31 +47,25 @@
 				
 		hist('#container', getEnglishFrequencies());
 		
-		Logger.level = LogLevel.Off;
+		Logger.level = LogLevel.Debug;
 		
-		var alphaEl = $('#alpha');
-		var keyInput = $('#key');
+		var alphaEl = $('#alpha');		
 		var messageEl = $('#msg');
+		var keyEl = $('#key');
 		var outMessageInput = $('#outmsg');
-		var encodeBtn = $('#encode-btn');
-		var decodeBtn = $('#decode-btn');
-		var attackBtn = $('#attack-btn');
-		var showTableEl = document.getElementById('show-table');
-		
-		var encoder = new VigenereEncoder();
-		var tableElement = document.getElementById('table');
-		var table = new VigenereTable(tableElement, encoder);
+		var attackBtn = $('#attack-btn');				
 				
-		alphaEl.val('abcdefghijklmnopqrstuvwxyz');
-		keyInput.val('crypto');		
-		messageEl.val('Scrooge was better than his word. He did it all, and infinitely more; and to Tiny Tim, who did not die, he was a second father. He became as good a friend, as good a master, and as good a man, as the good old city knew, or any other good old city, town, or borough, in the good old world. Some people laughed to see the alteration in him, but he let them laugh, and little heeded them; for he was wise enough to know that nothing ever happened on this globe, for good, at which some people did not have their fill of laughter in the outset; and knowing that such as these would be blind anyway, he thought it quite as well that they should wrinkle up their eyes in grins, as have the malady in less attractive forms. His own heart laughed: and that was quite enough for him. He had no further intercourse with Spirits, but lived upon the Total Abstinence Principle, ever afterwards; and it was always said of him, that he knew how to keep Christmas well, if any man alive possessed the knowledge. May that be truly said of us, and all of us! And so, as Tiny Tim observed, God bless Us, Every One!');							
+		alphaEl.val('abcdefghijklmnopqrstuvwxyz');		
+		messageEl.val('utpdhugnyhusvkcgmvcefxlkqibwxrkugitznrlsbbhzlxmsnpkdkscebihhkewibayymsbrpfrsbsjvuplouvadgrhrrwxfjvztvoovyhzcquyukwgebpluqfbpfoukcgtbfrqvhcfrkpgoukftzcqumawqkkwzgsyfppgmqkftkuqfbderezrnmcyemguctfsvawpkftzcqumawkqijslcovnthdnvjpnujvbihggvrwxonkcgthkflxgvkdzjmvgccimvgdjpnujrlsewvkjtasgucsmvgdddkvgnyhpwuvcchiiyrddbqnrwthpfrwbbivttkvcgntgsffliawuxjdushfpvhcfrrlaweyqdfsrvmeesfzbchhjrttmvgzpubznfdatiiyrtkwpkfthivjcitbfbldpwpxrwthulawtgvychxkqljsusdcgcwoppuprvgkfdnujkgijikkcplkgcjiaovkftrgjfsawktzlzeswgrwxwtvwtlwpxpxggcjfposvycbtzcuwxgzgjqpmhtraibjgwmgfgjzqdpbjvygmzclewxrcebiaovnyhjikkctgcwxfuhfjzkwxvculdyitkftkwpkcgvcwiqtpwvyqebfkkqqnhnzttwirfliasvfrpeodjrxgsptcekwptgeesgmcgttvvpltffjycwwvnyhtzyrwhlokumuawokfpmvgbltpvqnrddsggawkwukkplkgcjxyoppkpgonztticujchlsfkftdbqnjtwugdynmvckztmfwcwhtwffdjlopuyaechlqpgrufyhmwpprxfcdjcgosfxmsuzgjqjlsxvpnhbg');							
 		
 		attackBtn.on('click', function() {
 			var alphabet = alphaEl.val();
 			var cipher = messageEl.val();
 			var breaker = new VigenereBreaker();
 			breaker.alphabet = alphabet;
-			outMessageInput.val(breaker.break(cipher));			
+			var res = breaker.break(cipher);
+			keyEl.val(res['key']);
+			outMessageInput.val(res['message']);			
 		});		
 	});
 	
