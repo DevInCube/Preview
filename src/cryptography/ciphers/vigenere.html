@@ -24,6 +24,8 @@
 	<input id='msg' class="form-control" value=''/>
 	<button id='encode-btn' class='btn btn-default'>Encode</button>
 	<button id='decode-btn' class='btn btn-default'>Decode</button>
+	<button id='attack-btn' class='btn btn-default'>Attack</button>
+	<input id='show-table' type='checkbox' />Show table<br>
 	<br>
 	<label>Output message:</label>
 	<input id='outmsg' class="form-control" value=''/>
@@ -105,7 +107,7 @@
 		return tableEl;
 	}
 	
-	function cipherText(alphabet, key, message, isDecode) {
+	function cipherText(alphabet, key, message, isDecode, showTable) {
 		alphabet = alphabet.toLowerCase();
 		key = key.toLowerCase();
 		message = message.toLowerCase();
@@ -134,10 +136,11 @@
 			var index = mod(shiftedIndex, alphabet.length);					
 			res += alphabet[index];
 		}
-		var tableContainerDiv = $('#table-container');
-		tableContainerDiv.empty();
-		var table = genTable(alphabet, longKey, message.length, isDecode);
-		tableContainerDiv.append(createTableDOM(table, alphabet, message, res));
+		if(showTable) {
+			var tableContainerDiv = $('#table-container');
+			var table = genTable(alphabet, longKey, message.length, isDecode);
+			tableContainerDiv.append(createTableDOM(table, alphabet, message, res));
+		}
 		return res;
 	}
 	
@@ -148,20 +151,36 @@
 		var outMessageInput = $('#outmsg');
 		var encodeBtn = $('#encode-btn');
 		var decodeBtn = $('#decode-btn');
+		var attackBtn = $('#attack-btn');
+		var showTableEl = document.getElementById('show-table');
 		
 		alphaEl.val('abcdefghijklmnopqrstuvwxyz');
 		keyInput.val('crypto');		
 		messageEl.val('Scrooge was better than his word. He did it all, and infinitely more; and to Tiny Tim, who did not die, he was a second father. He became as good a friend, as good a master, and as good a man, as the good old city knew, or any other good old city, town, or borough, in the good old world. Some people laughed to see the alteration in him, but he let them laugh, and little heeded them; for he was wise enough to know that nothing ever happened on this globe, for good, at which some people did not have their fill of laughter in the outset; and knowing that such as these would be blind anyway, he thought it quite as well that they should wrinkle up their eyes in grins, as have the malady in less attractive forms. His own heart laughed: and that was quite enough for him. He had no further intercourse with Spirits, but lived upon the Total Abstinence Principle, ever afterwards; and it was always said of him, that he knew how to keep Christmas well, if any man alive possessed the knowledge. May that be truly said of us, and all of us! And so, as Tiny Tim observed, God bless Us, Every One!');		
 					
 		encodeBtn.on('click', function() {
-			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), false);						
+			var tableContainerDiv = $('#table-container');
+			tableContainerDiv.empty();
+			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), false, showTableEl.checked);						
 			outMessageInput.val(res.toUpperCase());
 		});
 		
-		decodeBtn.on('click', function() {									
-			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), true);
+		decodeBtn.on('click', function() {
+			var tableContainerDiv = $('#table-container');
+			tableContainerDiv.empty();									
+			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), true, showTableEl.checked);
 			outMessageInput.val(res.toUpperCase());
 		});
+		
+		attackBtn.on('click', function() {
+			var alphabet = alphaEl.val();
+			var cipher = messageEl.val();
+			var probable_key_length_list = analyze(cipher);
+			var key_length = parseInt(probable_key_length_list[0]);
+			var key = getKey(cipher, key_length);
+			var message = cipherText(alphabet, key, cipher, true);
+			outMessageInput.val(message);
+		});		
 	});
 	
 	function analyze(text) {
@@ -284,6 +303,9 @@
 		['y',	1.974	],
 		['z',	0.074	],		 
 	];	
+	var copy = [];
+	eng_freq.forEach(function(el, i, arr) { copy.push([el[0], el[1] / 100]); });
+	eng_freq = copy;
 	
 	function hist(container_id, data) {
 		$(container_id).highcharts({
@@ -291,10 +313,10 @@
 	            type: 'column'
 	        },
 	        title: {
-	            text: 'World\'s largest cities per 2014'
+	            text: 'Data distribution'
 	        },
 	        subtitle: {
-	            text: 'Source: <a href="http://en.wikipedia.org/wiki/List_of_cities_proper_by_population">Wikipedia</a>'
+	            text: ''
 	        },
 	        xAxis: {
 	            type: 'category',
@@ -309,25 +331,25 @@
 	        yAxis: {
 	            min: 0,
 	            title: {
-	                text: 'Population (millions)'
+	                text: ''
 	            }
 	        },
 	        legend: {
 	            enabled: false
 	        },
 	        tooltip: {
-	            pointFormat: 'Population in 2008: <b>{point.y:.1f} millions</b>'
+	            pointFormat: 'y'
 	        },
 	        series: [{
-	            name: 'Population',
+	            name: 'Frequency',
 	            data: data,
 	            dataLabels: {
 	                enabled: true,
 	                rotation: -90,
 	                color: '#FFFFFF',
 	                align: 'right',
-	                format: '{point.y:.1f}', // one decimal
-	                y: 10, // 10 pixels down from the top
+	                format: '{point.y:.4f}', // one decimal
+	                y: 5, // 10 pixels down from the top
 	                style: {
 	                    fontSize: '13px',
 	                    fontFamily: 'Verdana, sans-serif'
