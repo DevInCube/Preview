@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Шифр Віженера</title>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script>if (!window.jQuery) { 
+		var script = document.createElement('script');
+		script.src = "../../lib/jquery.min.js";
+		document.appendChild(script);
+	}</script>			
+	<link rel="stylesheet" type="text/css" href="main.css" />
+</head>
+<body>
+<div class='container'>
+	<h1>Шифр Віженера</h1>
+	<label>Alphabet:</label>
+	<input id='alpha' class="form-control" value=''/>
+	<label>Key:</label>
+	<input id='key' type="text" class="form-control" value=''/>
+	<label>Message:</label>
+	<input id='msg' class="form-control" value=''/>
+	<button id='encode-btn' class='btn btn-default'>Encode</button>
+	<button id='decode-btn' class='btn btn-default'>Decode</button>
+	<br>
+	<label>Output message:</label>
+	<input id='outmsg' class="form-control" value=''/>
+	<label>Encoding table:</label>
+	<div id='table-container'></div>
+</div>
+<script>	
+	
+	function mod(n, m) {
+        return ((n % m) + m) % m;
+	}
+	
+	function genTable(alphabet, key, length, isDecode) {	
+		var t = [];		
+		for (var i = 0; i < length; i++) {
+			var shift = alphabet.indexOf(key[i]);			
+			t.push([]);
+			for (var j = 0; j < alphabet.length; j++) {
+				var shiftedIndex = j + (isDecode ? -1 : 1) * shift;
+				var index = mod(shiftedIndex, alphabet.length);					
+				t[i][j] = alphabet[index];
+			}	
+		}
+		return t;
+	}
+	
+	function createTableDOM(table, header, message, cipher) {		
+		
+		var tableEl = document.createElement('table');
+		tableEl.className = 'table table-bordered';
+		tableHeadEl = document.createElement('thead');
+		tableEl.appendChild(tableHeadEl);
+		tableHeadRowEl = document.createElement('tr');
+		tableHeadEl.appendChild(tableHeadRowEl);
+								
+		tableHeadRowEl.appendChild(document.createElement("th")); 		
+		for (var i = 0; i < header.length; i++) {
+			var headEl = document.createElement("th");
+			headEl.innerText = header[i].toUpperCase();
+			tableHeadRowEl.appendChild(headEl)
+		}
+		tableHeadRowEl.appendChild(document.createElement("th")); 
+		
+		tableBodyEl = document.createElement('tbody');
+		tableEl.appendChild(tableBodyEl);
+		for (var i = 0; i < message.length; i++) {
+			var rowEl = document.createElement("tr");
+			tableBodyEl.appendChild(rowEl);
+						
+			
+			var mtdEl = document.createElement("th");
+			mtdEl.setAttribute("scope", "row");					
+			var m = message[i];
+			var mark_index = header.indexOf(m);
+			mtdEl.innerText = m.toUpperCase();
+			rowEl.appendChild(mtdEl);
+					
+			for (var j = 0; j < table[i].length; j++) {				
+				var val = table[i][j].toUpperCase();
+				var cellEl = document.createElement("td");
+				cellEl.innerText = val;
+				if(mark_index == j)
+					cellEl.className = "marked";
+				rowEl.appendChild(cellEl)
+			}	
+			
+			var mtdEl = document.createElement("th");
+			mtdEl.setAttribute("scope", "row");					
+			var c = cipher[i].toUpperCase();;
+			mtdEl.innerText = c;
+			rowEl.appendChild(mtdEl);
+		}
+		return tableEl;
+	}
+	
+	function cipherText(alphabet, key, message, isDecode) {
+		alphabet = alphabet.toLowerCase();
+		key = key.toLowerCase();
+		message = message.toLowerCase();		
+		var num = Math.ceil(message.length / key.length);
+		var longKey = '';			
+		while(num-- > 0) 
+			longKey += key;
+		longKey = longKey.substring(0, message.length);		
+		var res = "";		
+		for (var i = 0, len = message.length; i < len; i++) {
+		  	var m = message[i];	
+			var k = longKey[i];							
+			var shiftedIndex = alphabet.indexOf(m) + (isDecode ? -1 : 1) * alphabet.indexOf(k);
+			var index = mod(shiftedIndex, alphabet.length);					
+			res += alphabet[index];
+		}
+		var tableContainerDiv = $('#table-container');
+		tableContainerDiv.empty();
+		var table = genTable(alphabet, longKey, message.length, isDecode);
+		tableContainerDiv.append(createTableDOM(table, alphabet, message, res));
+		return res;
+	}
+	
+	$(document).ready(function() {
+		var alphaEl = $('#alpha');
+		var keyInput = $('#key');
+		var messageEl = $('#msg');
+		var outMessageInput = $('#outmsg');
+		var encodeBtn = $('#encode-btn');
+		var decodeBtn = $('#decode-btn');
+		
+		alphaEl.val('abcdefghijklmnopqrstuvwxyz');
+		keyInput.val('LEMON');		
+		messageEl.val('ATTACKATDAWNissomsomlongdamnhowtoencodeitwow');		
+					
+		encodeBtn.on('click', function() {
+			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), false);						
+			outMessageInput.val(res);
+		});
+		
+		decodeBtn.on('click', function() {									
+			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), true);
+			outMessageInput.val(res);
+		});
+	});
+</script>
+</body>
+</html>

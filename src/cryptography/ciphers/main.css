@@ -1,0 +1,10 @@
+td.marked {
+	font-weight: bold;
+	background: yellow;
+}
+th {
+	background-color: #eeeeee;	
+}
+td, th {
+	text-align: center;
+}

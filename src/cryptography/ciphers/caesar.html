@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Шифр Цезаря</title>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script>if (!window.jQuery) { 
+		var script = document.createElement('script');
+		script.src = "../../lib/jquery.min.js";
+		document.appendChild(script);
+	}</script>			
+	<link rel="stylesheet" type="text/css" href="main.css" />
+</head>
+<body>
+<div class='container'>
+	<h1>Шифр Цезаря</h1>
+	<label>Alphabet:</label>
+	<input id='alpha' class="form-control" value=''/>
+	<label>Shift:</label>
+	<input id='shift' type="number" class="form-control" value='3'/>
+	<label>Message:</label>
+	<input id='msg' class="form-control" value=''/>
+	<button id='run-btn' class='btn btn-default'>Encode</button>
+	<button id='decode-btn' class='btn btn-default'>Decode</button>
+	<br>
+	<label>Output message:</label>
+	<input id='outmsg' class="form-control" value=''/>
+</div>
+<script>
+	
+	function genShiftedAlphabet(alphabet, shiftVal, isInverse) {
+		var newAlphabet = alphabet.toLowerCase().split('');
+		var shift = Math.abs(shiftVal);
+		var dir = (shiftVal / shift) * (isInverse ? -1 : 1);
+		while(shift-- > 0) {
+			if(dir > 0) 
+				newAlphabet.push(newAlphabet.shift());
+			else
+				newAlphabet.unshift(newAlphabet.pop());
+		}
+		console.log(newAlphabet);
+		return newAlphabet;
+	}
+	
+	function cipherText(alphabet, message, shiftVal, isDecode) {
+		var newAlphabet = genShiftedAlphabet(alphabet, shiftVal, isDecode);
+		var res = "";
+		message = message.toLowerCase();
+		for (var i = 0, len = message.length; i < len; i++) {
+		  	var ch = message[i];
+			var index = alphabet.indexOf(ch);
+			res += newAlphabet[index];
+		}
+		return res;
+	}
+	
+	$(document).ready(function() {
+		var alphaEl = $('#alpha');
+		alphaEl.val('abcdefghijklmnopqrstuvwxyz');
+		var messageEl = $('#msg');
+		messageEl.val('SECRET');
+		
+		var outMessageInput = $('#outmsg');
+		var shiftInput = $('#shift');
+		
+		var runBtn = $('#run-btn');
+		runBtn.on('click', function() {
+			var res = cipherText(alphaEl.val(), messageEl.val(), shiftInput.val(), false);						
+			outMessageInput.val(res);
+		});
+		var decodeBtn = $('#decode-btn');
+		decodeBtn.on('click', function() {									
+			var res = cipherText(alphaEl.val(), messageEl.val(), shiftInput.val(), true);
+			outMessageInput.val(res);
+		});
+	});
+</script>
+</body>
+</html>
