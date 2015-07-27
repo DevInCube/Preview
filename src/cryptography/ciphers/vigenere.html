@@ -10,6 +10,7 @@
 		script.src = "../../lib/jquery.min.js";
 		document.appendChild(script);
 	}</script>			
+	<script src="highcharts.js"></script>
 	<link rel="stylesheet" type="text/css" href="main.css" />
 </head>
 <body>
@@ -28,6 +29,12 @@
 	<input id='outmsg' class="form-control" value=''/>
 	<label>Encoding table:</label>
 	<div id='table-container'></div>
+	<h4>Links:</h4>
+	<ol>
+		<li><a href='https://ru.wikipedia.org/wiki/Метод_Касиски#'>https://ru.wikipedia.org/wiki/Метод_Касиски#</a></li>
+	</ol>
+	<div id='container'></div>
+	<div id='container2'></div>
 </div>
 <script>	
 	
@@ -101,7 +108,16 @@
 	function cipherText(alphabet, key, message, isDecode) {
 		alphabet = alphabet.toLowerCase();
 		key = key.toLowerCase();
-		message = message.toLowerCase();		
+		message = message.toLowerCase();
+		var newMessage = '';	
+		for (var i = 0, len = message.length; i < len; i++) {
+		  	var m = message[i];	
+			if(alphabet.indexOf(m) == -1) {
+				continue;
+			}	
+			newMessage += m;
+		}	
+		message = newMessage;
 		var num = Math.ceil(message.length / key.length);
 		var longKey = '';			
 		while(num-- > 0) 
@@ -110,6 +126,9 @@
 		var res = "";		
 		for (var i = 0, len = message.length; i < len; i++) {
 		  	var m = message[i];	
+			if(alphabet.indexOf(m) == -1) {				
+				continue;
+			}				
 			var k = longKey[i];							
 			var shiftedIndex = alphabet.indexOf(m) + (isDecode ? -1 : 1) * alphabet.indexOf(k);
 			var index = mod(shiftedIndex, alphabet.length);					
@@ -131,19 +150,262 @@
 		var decodeBtn = $('#decode-btn');
 		
 		alphaEl.val('abcdefghijklmnopqrstuvwxyz');
-		keyInput.val('LEMON');		
-		messageEl.val('ATTACKATDAWNissomsomlongdamnhowtoencodeitwow');		
+		keyInput.val('crypto');		
+		messageEl.val('Scrooge was better than his word. He did it all, and infinitely more; and to Tiny Tim, who did not die, he was a second father. He became as good a friend, as good a master, and as good a man, as the good old city knew, or any other good old city, town, or borough, in the good old world. Some people laughed to see the alteration in him, but he let them laugh, and little heeded them; for he was wise enough to know that nothing ever happened on this globe, for good, at which some people did not have their fill of laughter in the outset; and knowing that such as these would be blind anyway, he thought it quite as well that they should wrinkle up their eyes in grins, as have the malady in less attractive forms. His own heart laughed: and that was quite enough for him. He had no further intercourse with Spirits, but lived upon the Total Abstinence Principle, ever afterwards; and it was always said of him, that he knew how to keep Christmas well, if any man alive possessed the knowledge. May that be truly said of us, and all of us! And so, as Tiny Tim observed, God bless Us, Every One!');		
 					
 		encodeBtn.on('click', function() {
 			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), false);						
-			outMessageInput.val(res);
+			outMessageInput.val(res.toUpperCase());
 		});
 		
 		decodeBtn.on('click', function() {									
 			var res = cipherText(alphaEl.val(), keyInput.val(), messageEl.val(), true);
-			outMessageInput.val(res);
+			outMessageInput.val(res.toUpperCase());
 		});
 	});
+	
+	function analyze(text) {
+		
+		var Pair = function(index, value) { 
+			this.index = index; 
+			if(!value) value = 0;
+			this.value = value; 
+		};
+		var digramLength = 3;
+		function gcd(a, b) { if(!b) return a; else return gcd(b, a % b); }
+		
+		var repeatCount = [];
+		for (var i = 0; i < text.length - digramLength + 1; i++) {
+			var temp = text.substring(i, i + digramLength);
+			for (var j = i + 1; j < text.length - digramLength + 1; j++) {
+				var temp2 = text.substring(j, j + digramLength);
+				if(temp == temp2)
+					repeatCount.push(j - i);
+			}
+		}		
+		var nods = zeros(5000);
+		for (var i = 0; i < repeatCount.length; ++i)
+		    for (var j = i + 1; j < repeatCount.length; ++j)
+		        nods[gcd(repeatCount[i], repeatCount[j])]++;
+		nods[0] = 0;		
+		var ans = new Array();
+		for (var i = 2; i < 500; ++i) {
+			var p = new Pair(i, nods[i]);
+            ans.push(p);			
+        }			
+		var anss = ans.sort(function(a, b) { return b.value-a.value; });		
+		var res = [];
+		for(var i = 0; i < 10; i++)
+			if(anss[i].value > 0)
+				res.push(anss[i].index); 
+		return res;		
+	}
+	
+	function breakCode(cipher) {
+		var alphabet = 'abcdefghijklmnopqrstuvwxyz';
+		var key_length = parseInt(analyze(cipher)[0]);
+		var key = getKey(cipher, key_length);
+		var message = cipherText(alphabet, key, cipher, true);
+		return message;
+	}
+	
+	function getKey(cipher, key_length) {
+		var key = '';
+		for(var i = 0; i < key_length; i++) {
+			key += getChar(getFreq(getEveryChar(cipher, i, key_length)));
+		}
+		return key;
+	}
+	
+	function getEveryChar(text, shift, period) {
+		var res = '';
+		for(var i = shift; i < text.length; i++) {
+			var ch = text[i];
+			if((i - shift) % period == 0)
+				res += ch;
+		}
+		return res;
+	}
+	
+	function zeros(length) {
+		var arr = new Array(length);
+		for(var i = 0; i < length; i++)
+			arr[i] = 0;
+		return arr;
+	}
+	
+	function getFreq(text) {
+		var Pair = function(ch, value) { 
+			this.ch = ch; 			
+			this.value = value; 
+		};		
+		
+		text = text.toLowerCase();
+		var alpha = 'abcdefghijklmnopqrstuvwxyz';
+		var freq = zeros(alpha.length);
+		for(var j = 0; j < text.length; j++) {
+			var index = alpha.indexOf(text[j]);
+			freq[index]++;
+		}
+		var data = [];
+		for(var i = 0; i < freq.length; i++) {
+			var val = freq[i] / text.length;
+			data.push([alpha[i], val]);			
+		}			
+		return data;
+	}
+	
+	var alpha = 'abcdefghijklmnopqrstuvwxyz';
+	var eng_freq = [
+		['a',	8.167	],
+		['b',	1.492	],
+		['c',	2.782	],
+		['d',	4.253	],
+		['e',	12.702	],
+		['f',	2.228	],
+		['g',	2.015	],
+		['h',	6.094	],
+		['i',	6.966	],
+		['j',	0.153	],
+		['k',	0.772	],
+		['l',	4.025	],
+		['m',	2.406	],
+		['n',	6.749	],
+		['o',	7.507	],
+		['p',	1.929	],
+		['q',	0.095	],
+		['r',	5.987	],
+		['s',	6.327	],
+		['t',	9.056	],
+		['u',	2.758	],
+		['v',	0.978	],
+		['w',	2.361	],
+		['x',	0.150	],
+		['y',	1.974	],
+		['z',	0.074	],		 
+	];	
+	
+	function hist(container_id, data) {
+		$(container_id).highcharts({
+	        chart: {
+	            type: 'column'
+	        },
+	        title: {
+	            text: 'World\'s largest cities per 2014'
+	        },
+	        subtitle: {
+	            text: 'Source: <a href="http://en.wikipedia.org/wiki/List_of_cities_proper_by_population">Wikipedia</a>'
+	        },
+	        xAxis: {
+	            type: 'category',
+	            labels: {
+	                rotation: -45,
+	                style: {
+	                    fontSize: '13px',
+	                    fontFamily: 'Verdana, sans-serif'
+	                }
+	            }
+	        },
+	        yAxis: {
+	            min: 0,
+	            title: {
+	                text: 'Population (millions)'
+	            }
+	        },
+	        legend: {
+	            enabled: false
+	        },
+	        tooltip: {
+	            pointFormat: 'Population in 2008: <b>{point.y:.1f} millions</b>'
+	        },
+	        series: [{
+	            name: 'Population',
+	            data: data,
+	            dataLabels: {
+	                enabled: true,
+	                rotation: -90,
+	                color: '#FFFFFF',
+	                align: 'right',
+	                format: '{point.y:.1f}', // one decimal
+	                y: 10, // 10 pixels down from the top
+	                style: {
+	                    fontSize: '13px',
+	                    fontFamily: 'Verdana, sans-serif'
+	                }
+	            }
+	        }]
+	    });
+	}
+	
+	hist('#container', eng_freq);
+	
+	
+	function getMostChars(freqs) {
+		var Pair = function(ch, value) { 
+			this.ch = ch; 			
+			this.value = value; 
+		};
+		var alpha = 'abcdefghijklmnopqrstuvwxyz';
+		var len = alpha.length;
+		var lengths = zeros(len);
+		for(var i = 0; i < len; i++) {
+			var char1 = eng_freq[i][0].toLowerCase();
+			var char2 = freqs[i].ch.toLowerCase();
+			var diff = Math.abs(alpha.indexOf(char1) - alpha.indexOf(char2));			
+			lengths[diff]++;
+		}
+		var chars = new Array(len);
+		for(var i = 0; i < len; i++) {
+			var val = lengths[i];
+			chars[i] = new Pair(alpha[i], val);					
+		}		
+		return chars.sort(function(a, b) { return b.value-a.value; });
+	}		
+	
+	function shift(data, by) {
+		while(by-- > 0) {
+			data.push(data.shift());
+		}
+		return data;
+	}
+	
+	function calcChi2(data) {
+		var CriticalValue = 0;		
+		for(var I = 0; I < eng_freq.length; I++){
+		    var XSqr = data[I][1] - eng_freq[I][1];
+		    CriticalValue += ((XSqr * XSqr) / eng_freq[I][1]);
+		}
+		return CriticalValue;
+	}
+	
+	function getChar(data) {
+		var alpha = 'abcdefghijklmnopqrstuvwxyz';
+		var min = Number.MAX_SAFE_INTEGER;
+		var min_index = -1;
+		for(var i = 0; i < alpha.length; i++){
+			var shiftBy = i;
+			var data2 = shift(data.slice(), shiftBy);
+			var chi2 = calcChi2(data2);
+			if(chi2 < min) {
+				min = chi2;
+				min_index = i;
+			}
+		}
+		return alpha[min_index];
+	}
+	
+	function test(data) {
+		var alpha = 'abcdefghijklmnopqrstuvwxyz';
+		var res = "";
+		for(var i = 0; i < alpha.length; i++){
+			var shiftBy = i;
+			var data2 = shift(data.slice(), shiftBy);
+			var chi2 = calcChi2(data2);
+			res += alpha[i] + ": " + chi2 +"\r\n";
+		}
+		return res;
+	}
+	
 </script>
 </body>
 </html>
