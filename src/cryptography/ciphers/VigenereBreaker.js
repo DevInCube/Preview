@@ -1,7 +1,34 @@
 var VigenereBreaker = function() {
 	
+	this.encoder = new VigenereEncoder();
 	this.alphabet = '';
-	this.key_analyst = function(text) { return kasiskiTest(text, 3); }
+	this.key_analyst = function(text) {
+		//return friedmanTest(text, this.alphabet); 
+		return kasiskiTest(text, 3); 
+	}
+}
+
+function Ic(text, alphabet) {
+	var N = text.length;
+	var n = getFreqs(text, alphabet);
+	var sum = 0;
+	n.forEach(function(el, i, arr) {
+		var ni = Math.floor(el); 
+		sum += ni * (ni - 1); 
+	});
+	return sum / (N * (N - 1));
+}
+
+function friedmanTest(text, alphabet) {
+	var kp = 0.067;  // eng 0.065
+	var kr = 0.0385; // 1/26 0.038
+	var N = text.length;
+	var ko = Ic(text, alphabet);
+	var len = (kp - kr) / (ko - kr);	
+	var m = (0.027 * N) / ((N - 1) * ko - 0.038 * N + 0.065);	
+	Logger.debug(len);	
+	Logger.debug(m);
+	return ;//[Math.floor(len)];
 }
 
 VigenereBreaker.prototype.break = function(cipher) {		
@@ -9,9 +36,8 @@ VigenereBreaker.prototype.break = function(cipher) {
 	var key_length = parseInt(probable_key_length_list[0]);
 	var key = this.getKey(cipher, key_length);
 	Logger.debug(key);
-	var encoder = new VigenereEncoder();
-	encoder.alphabet = this.alphabet;
-	var message = encoder.decode(cipher, key);
+	this.encoder.alphabet = this.alphabet;
+	var message = this.encoder.decode(cipher, key);
 	return {'message': message, 'key': key};
 };
 
@@ -66,18 +92,19 @@ function getEveryChar(text, shift, period) {
 	return res;
 }
 
-function getCharsFrequencies(text, alpha) {
-	var Pair = function(ch, value) { 
-		this.ch = ch; 			
-		this.value = value; 
-	};		
-	
+function getFreqs(text, alpha) {
 	text = text.toLowerCase();
 	var freq = zeros(alpha.length);
 	for(var j = 0; j < text.length; j++) {
 		var index = alpha.indexOf(text[j]);
 		freq[index]++;
 	}
+	return freq;
+}
+
+function getCharsFrequencies(text, alpha) {
+	var freq = getFreqs(text, alpha);
+	
 	var data = [];
 	for(var i = 0; i < freq.length; i++) {
 		var val = freq[i] / text.length;
