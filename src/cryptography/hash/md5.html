@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MD5</title>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script>if (!window.jQuery) { 
+		var script = document.createElement('script');
+		script.src = "../../lib/jquery.min.js";
+		document.appendChild(script);
+	}</script>
+</head>
+<body>
+<div class='container'>
+	<h1>MD5</h1>	
+	<p>Takes as input a message of arbitrary length and
+produces as output a 128 bit “fingerprint” or
+“message digest” of the input.</p>	
+	<p>It is conjectured that it is computationally infeasible
+to produce two messages having the same
+message digest.</p>
+	<label>Cipher:</label>
+	<input id='msg' class="form-control" value=''/>
+	<label>Alphabet:</label>
+	<input id='alpha' class="form-control" value=''/>
+	<button id='attack-btn' class='btn btn-default'>Attack</button>	
+	<br>
+	<label>Key:</label>
+	<input id='key' class="form-control" value=''/>
+	<label>Output message:</label>
+	<input id='outmsg' class="form-control" value=''/>		
+	<div id='steps'>
+		
+	</div>
+	<h4>Links:</h4>
+	<ol>
+		<li><a href='http://infohost.nmt.edu/~sfs/Students/HarleyKozushko/Presentations/MD5.pdf'>MD5 Algorithm</a></li>
+		<li><a href='http://www.herongyang.com/Cryptography/MD5-Message-Digest-Algorithm-Overview.html'>MD5</a></li>			
+		<li><a href=''></a></li>			
+	</ol>
+</div>
+<script src="../../common/Logger.js"></script>
+<script src="md5.js"></script>
+<script>
+	
+	$(document).ready(function() {
+		
+		Logger.level = LogLevel.Debug;
+		
+		var alphaEl = $('#alpha');		
+		var messageEl = $('#msg');
+		var keyEl = $('#key');
+		var outMessageInput = $('#outmsg');
+		var attackBtn = $('#attack-btn');				
+				
+		alphaEl.val('abcdefghijklmnopqrstuvwxyz');		
+		messageEl.val('utpdhugnyhusvkcgmvcefxlkqibwxrkugitznrlsbbhzlxmsnpkdkscebihhkewibayymsbrpfrsbsjvuplouvadgrhrrwxfjvztvoovyhzcquyukwgebpluqfbpfoukcgtbfrqvhcfrkpgoukftzcqumawqkkwzgsyfppgmqkftkuqfbderezrnmcyemguctfsvawpkftzcqumawkqijslcovnthdnvjpnujvbihggvrwxonkcgthkflxgvkdzjmvgccimvgdjpnujrlsewvkjtasgucsmvgdddkvgnyhpwuvcchiiyrddbqnrwthpfrwbbivttkvcgntgsffliawuxjdushfpvhcfrrlaweyqdfsrvmeesfzbchhjrttmvgzpubznfdatiiyrtkwpkfthivjcitbfbldpwpxrwthulawtgvychxkqljsusdcgcwoppuprvgkfdnujkgijikkcplkgcjiaovkftrgjfsawktzlzeswgrwxwtvwtlwpxpxggcjfposvycbtzcuwxgzgjqpmhtraibjgwmgfgjzqdpbjvygmzclewxrcebiaovnyhjikkctgcwxfuhfjzkwxvculdyitkftkwpkcgvcwiqtpwvyqebfkkqqnhnzttwirfliasvfrpeodjrxgsptcekwptgeesgmcgttvvpltffjycwwvnyhtzyrwhlokumuawokfpmvgbltpvqnrddsggawkwukkplkgcjxyoppkpgonztticujchlsfkftdbqnjtwugdynmvckztmfwcwhtwffdjlopuyaechlqpgrufyhmwpprxfcdjcgosfxmsuzgjqjlsxvpnhbg');							
+		
+		attackBtn.on('click', function() {
+			var alphabet = alphaEl.val();
+			var cipher = messageEl.val();
+			var breaker = new VigenereBreaker();
+			breaker.alphabet = alphabet;
+			var res = breaker.break(cipher);
+			keyEl.val(res['key']);
+			outMessageInput.val(res['message']);			
+		});		
+	});
+	
+</script>
+</body>
+</html>
