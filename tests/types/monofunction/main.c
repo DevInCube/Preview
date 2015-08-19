@@ -1,18 +1,24 @@
 #include <stdio.h>
+#include "test.h"
+#include "mono.h"
 
-int main ( int argc, char *argv[] )
-{
-  if ( argc != 2 ) /* argc should be 2 for correct execution */
-  {
-    return 1;
-  }
-  else 
-  {
-    int num_tests = argv[1];
-    while(num_tests-- >= 0)
-    {
-      // 
-    }
-    return 0;
-  }
+int main() {
+	struct TestCaseSet set;
+	createTestCases(&set);
+	//printTestCases(set);
+	int n = set.length;
+	int	count = 0;
+	int i;
+	for(i = 0; i < n; i++) {
+		struct TestCase c = *(set.cases + i);
+		int pass = checkCase(c);
+		if(pass)
+			count++;		
+	}
+
+	printf("Passed:\t%d\n", count);
+	printf("Total:\t%d\n", n);
+	return 0;
 }
+
+
