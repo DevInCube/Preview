@@ -1,0 +1,1 @@
+int multDigits(int);
