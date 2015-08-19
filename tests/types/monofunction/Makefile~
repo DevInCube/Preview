@@ -4,7 +4,7 @@ TARGET = run
 all: $(TARGET)
 
 $(TARGET): main.c mono.c test.c 
-	$(CC) main.c mono.c test.c -o $(TARGET) -lm
+	$(CC) main.c mono.c test.c -o $(TARGET)
 
 clean:
 	$(RM) $(TARGET)
