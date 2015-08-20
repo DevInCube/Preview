@@ -2,6 +2,15 @@
 #include "test.h"
 #include "mono.h"
 
+void con_out(int count, int n) {
+	printf("Passed:\t%d\n", count);
+	printf("Total:\t%d\n", n);
+}
+
+void json_out(int pass, int total) {
+	printf("{\"pass\":%d,\"total\":%d}\n", pass, total);
+}
+
 int main() {
 	struct TestCaseSet set;
 	createTestCases(&set);
@@ -15,10 +24,10 @@ int main() {
 		if(pass)
 			count++;		
 	}
-
-	printf("Passed:\t%d\n", count);
-	printf("Total:\t%d\n", n);
+	json_out(count, n);
+	
 	return 0;
 }
+
 
 
