@@ -12,8 +12,10 @@ def copy_files(path_from, path_to):
 		if (os.path.isfile(full_file_name)):
 		    shutil.copy(full_file_name, path_to)
 		    
+build_root = '/tmp/build'
+			    
 def get_build_dir(id):
-	return 'build/%s/' % id	
+	return os.path.join(build_root, '%s/' % id)	
 	
 def get_build_meta(test_rel_path):
 	meta_path = os.path.join(ROOT_DIR, test_rel_path, 'meta.json')
@@ -21,8 +23,8 @@ def get_build_meta(test_rel_path):
 		return json.load(data_file)
 
 def create_build(test_rel_path, user_path):
-	if not os.path.exists('build'):
-		os.makedirs('build')
+	if not os.path.exists(build_root):
+		os.makedirs(build_root)
 	id = uuid.uuid4()
 	build_dir = get_build_dir(id);
 	os.makedirs(build_dir)
@@ -39,12 +41,17 @@ def create_build(test_rel_path, user_path):
 	
 def run_build(id, timeout=3):
 	dir = get_build_dir(id)
-	make_cmd = Command(['make', '-C', dir])
+	make_cmd = Command(['make', '-C', dir], cwd=dir)
 	make_cmd.run(shell=False)
 	if make_cmd.returncode or make_cmd.errors:
-		raise Exception('Make crash: \r\n\t%s' % make_cmd.errors)	
-	run_cmd = Command([os.path.join(dir, 'bin/run')])
+		raise Exception('Make crash: \r\n\t%s' % make_cmd.errors)			
+	# run_cmd = Command(['chmod', '-R', '+w', some_folder])
+	# run_cmd.run(timeout=timeout)
+	#subprocess.call(['chmod', '-R', '-w', dir])	
+	os.system('su sandbox')
+	run_cmd = Command(['./bin/run'], cwd=dir)
 	run_cmd.run(timeout=timeout)
+	#subprocess.call(['chmod', '-R', '+w', dir])
 	if run_cmd.returncode or run_cmd.errors:
 		raise Exception('Run crash: \r\n\t%s' % run_cmd.errors)
 	out = run_cmd.output
@@ -53,27 +60,73 @@ def run_build(id, timeout=3):
 	try:
 		res = json.loads(out)
 	except Exception as e:
-		raise Exception('Test crash: \r\n\t%s\r\n\t%s' % (str(e), out))
+		raise Exception('Test crash: \r\n\t%s\r\n"""%s"""' % (str(e), out))
 	return res
 	
 def clean_build(id):
-	shutil.rmtree(get_build_dir(id))
+	dir = get_build_dir(id)
+	print("Cleaning %s" % dir);
+	#shutil.rmtree(dir)
 	
 class Command(object):
-	def __init__(self, cmd):
-		self.cmd = cmd;
+	def __init__(self, cmd, cwd):
+		self.cmd = cmd
+		self.cwd = cwd
 		self.process = None
 		self.returncode = None
 		self.output = None
 		self.errors = None
 		
-	def run(self, timeout=1, shell=True):
+	def get_readonly_user():
+		pass
+		"""
+		pw_record = pwd.getpwnam("sandbox")
+		user_name      = pw_record.pw_name
+		user_home_dir  = pw_record.pw_dir
+		user_uid       = pw_record.pw_uid
+		user_gid       = pw_record.pw_gid
+		env = os.environ.copy()
+		env[ 'HOME'     ]  = user_home_dir
+		env[ 'LOGNAME'  ]  = user_name
+		env[ 'PWD'      ]  = cwd
+		env[ 'USER'     ]  = user_name
+		"""
+		
+	def owner(self):
+		pid = self.process.pid
+		'''Return username of UID of process pid'''
+		for ln in open('/proc/%d/status' % pid):
+		    if ln.startswith('Uid:'):
+		        uid = int(ln.split()[UID])
+		        return pwd.getpwuid(uid).pw_name
+		
+	def run(self, timeout=10, shell=True):
 		def target():
 			print('Thread started')
 			try:
 				print("runnning %s" % self.cmd)
-				self.process = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell, preexec_fn=os.setsid)
-				out, err = self.process.communicate()							
+				working_dir = self.cwd
+				env = os.environ.copy()	
+
+				import pwd
+				pw = pwd.getpwnam('sandbox')
+				
+				env['HOME'] = pw.pw_dir
+				env['LOGNAME'] = pw.pw_name
+				env['PWD'] = working_dir
+				env['USER'] = pw.pw_name
+				
+				def preexec():					
+					print("preexec")
+					os.setsid()
+					try:
+						os.setegid(1001)
+						os.seteuid(1001)
+					except Exception as e:
+						print(str(e))
+				
+				self.process = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell, preexec_fn=os.setsid, cwd=working_dir, env=env)
+				out, err = self.process.communicate()						
 				self.output = out
 				self.errors = err
 			except Exception as e:
@@ -85,8 +138,11 @@ class Command(object):
 		
 		thread.join(timeout)
 		if thread.is_alive():
-			print('Terminating process')
-			os.killpg(self.process.pid, signal.SIGTERM)
+			print('Terminating process %s' % self.process.pid)
+			try:
+				os.killpg(self.process.pid, signal.SIGTERM)
+			except:
+				pass
 			thread.join()
 			self.errors = "Timeout (%s sec)" % timeout
 		self.returncode = self.process.returncode
@@ -105,7 +161,7 @@ class MonoFunctionTest(object):
 			res = run_build(id, timeout=timeout)		
 			print(res)
 		except Exception as e:
-			print(str(e))
+			print("Build exception: \r\n\t%s" % str(e))
 		finally:	
 			pass
 			clean_build(id)
