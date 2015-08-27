@@ -1,28 +1,38 @@
 <head>
+	<meta charset="utf-8"/>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>	
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>	
 	<script src="../../lib/vis.min.js"></script>	
 	<link rel="stylesheet" type="text/css" href="turing.css" />
 </head>
 <body>
 <div class='container'>
-	<h1>Turing</h1>	
-	<label>Transitions:</label>
+	<h1>Turing</h1>		
 	<div class='row'>
 		<div class='col-md-6' style="height: 300px;">
+			<label>Transitions:</label>
 			<textarea id='algo' class="form-control"></textarea>
 		</div>
-		<div id="container" class='col-md-6'></div>
+		<div class='col-md-6' style="height: 300px;">
+			<label>States:</label>
+			<div id="container"></div>
+		</div>
 	</div>
-	<label>Input:</label>
-	<input id='input' class="form-control" value='default'/>	
+	<br>
+	<br>
+	<div class='row'>
+		<div class='col-md-12'>
+			<label>Input:</label>
+			<input id='input' class="form-control" value='default'/>		
+		</div>
+	</div>
 	<br>
 	<div>
 		<button id='set_btn' class='btn btn-default'>Set</button>
 		<button id='step_btn' class='btn btn-default'>Step</button>
 		<button id='run_btn' class='btn btn-default'>Run</button>
 		<button id='reset_btn' class='btn btn-default'>Reset</button>
+		<button id='reset_and_run_btn' class='btn btn-default'>Reset &amp; Run</button>
 	<div>
 	<canvas id='canvas'></canvas>
 	<br>
@@ -37,6 +47,7 @@
 	
 var set_btn = document.getElementById('set_btn');
 var reset_btn = document.getElementById('reset_btn');
+var reset_and_run_btn = document.getElementById('reset_and_run_btn');
 var step_btn = document.getElementById('step_btn');
 var run_btn = document.getElementById('run_btn');
 var input_el = document.getElementById('input');
@@ -156,29 +167,7 @@ function onTaskLinkClick(e) {
 	$(set_btn).click();
 }
 //---------------------------------------
-$(document).ready(function() {
-	machineCanvas = new TuringMachineCanvas('canvas');	
-	machineCanvas.draw();
-	setTask('inc10');
-	
-	for(var task_id in tasks) {
-		var item = document.createElement('li');
-		var link = document.createElement('a');
-		link.setAttribute('task_id', task_id);
-		link.setAttribute('href', '#');
-		link.innerHTML = task_id;
-		$(link).on('click', onTaskLinkClick);
-		item.appendChild(link);
-		tasks_el.appendChild(item);
-	}	
-});
-$(reset_btn).on('click', function(e) {
-	if(machine)
-		machine.reset();
-	network.selectNodes([machine.state], false);
-	machineCanvas.draw();
-});
-$(set_btn).on('click', function(e) {
+function set() {
 	var algo_text = $(algo_el).val();
 	var transitions = parseTransitions(algo_text);
 	
@@ -201,8 +190,14 @@ $(set_btn).on('click', function(e) {
 	
 	updateNetwork();
 	machineCanvas.draw();
-});
-$(step_btn).on('click', function(e) {	
+}
+function reset() {
+	if(machine)
+		machine.reset();
+	network.selectNodes([machine.state], false);
+	machineCanvas.draw();
+}
+function step() {
 	if(machine) {
 		var res = machine.step();
 		if(!res) 
@@ -210,8 +205,8 @@ $(step_btn).on('click', function(e) {
 	}
 	machineCanvas.draw();
 	updateNetwork();
-});
-$(run_btn).on('click', function(e){	
+}
+function run() {
 	if(machine) {
 		while(!machine.stop) { 		
 			var res = machine.step();
@@ -227,6 +222,40 @@ $(run_btn).on('click', function(e){
 		machineCanvas.draw();
 		updateNetwork();
 	}
+}
+//---------------------------------------
+$(document).ready(function() {
+	machineCanvas = new TuringMachineCanvas('canvas');	
+	machineCanvas.draw();
+	setTask('inc10');
+	
+	for(var task_id in tasks) {
+		var task = tasks[task_id];
+		var item = document.createElement('li');
+		var link = document.createElement('a');
+		link.setAttribute('task_id', task_id);
+		link.setAttribute('href', '#');
+		link.innerHTML = '<strong>' + task_id + "</strong>" + " - " + task.memo;
+		$(link).on('click', onTaskLinkClick);
+		item.appendChild(link);
+		tasks_el.appendChild(item);
+	}	
+});
+$(reset_btn).on('click', function(e) {
+	reset();
+});
+$(reset_and_run_btn).on('click', function(e) {
+	reset();
+	run();
+});
+$(set_btn).on('click', function(e) {
+	set();
+});
+$(step_btn).on('click', function(e) {	
+	step();
+});
+$(run_btn).on('click', function(e){	
+	run();
 });
 </script>
 </body>

@@ -9,3 +9,8 @@
 textarea.form-control {
   	min-height: 100%;
 }
+textarea {
+    resize: none;
+}
+
+body { background-color: white; }
