@@ -6,6 +6,12 @@ var Task = function(input, output, program, memo) {
 };
 
 var tasks = {};
+tasks['empty'] = new Task(
+	' ',
+	' ',
+	'q1, ->,,!',
+	'Пустий приклад'
+);
 tasks['hello'] = new Task(
 	'hello.',
 	'HELLO!',
