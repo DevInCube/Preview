@@ -22,12 +22,27 @@ var TuringTransition = function(condition, command) {
 
 /// q0,a->d,L,q1
 function parseTransition(str) {
-	var parts = str.split('->');
+	var parts = str.split('->');	
+	var state = '';
+	var value = '';
+	var input = '';
+	var move = '';
+	var new_state = '';
 	var cond_parts = parts[0].split(',');
-	var comm_parts = parts[1].split(',');
-	
-	var condition = new TuringCondition(cond_parts[0], cond_parts[1]);
-	var command = new TuringCommand( comm_parts[0], comm_parts[1], comm_parts[2]);
+	state = cond_parts[0];
+	if(cond_parts.length > 1 && cond_parts[1])
+		value = cond_parts[1][0];	
+	if(parts.length > 1) {
+		var comm_parts = parts[1].split(',');
+		if(comm_parts[0])
+			input = comm_parts[0][0];
+		if(comm_parts.length > 1)
+			move = comm_parts[1][0];
+		if(comm_parts.length > 2)
+			new_state = comm_parts[2];
+	}	
+	var condition = new TuringCondition(state, value);
+	var command = new TuringCommand( input, move, new_state);
 	return new TuringTransition(condition , command); 
 }
 
