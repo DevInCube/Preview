@@ -21,18 +21,18 @@ body { background-color: white; }
     min-height: 300px;  
 }
 
-#commands { width: 100%; }
+#commands { 
+    width: 100%;
+    table-layout: auto; 
+}
 
-#commands tbody tr td {
-    width: 15%;
+#commands tbody tr td {    
     border: 1px solid lightgray;
     text-align: center; 
 }
 #commands tbody tr td:first-child { 
-    width: 10%;
     background-color: #eef; 
 }
 #commands tbody tr td:nth-child(4) { 
-    width: 10%;
     background-color: #eef; 
 }

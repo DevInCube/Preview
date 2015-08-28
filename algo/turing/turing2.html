@@ -282,12 +282,12 @@ function updateCommands() {
 		var comm = t.command;
 		var row = $('<tr>');
 		$(row).append($('<td>').append(i));
-		$(row).append($('<td>').html(cond.state));
+		$(row).append($('<td>').html("(" + cond.state + ")"));
 		$(row).append($('<td>').html("'" + cond.value + "'"));
 		$(row).append($('<td>').html('—>'));
 		$(row).append($('<td>').html("'" + (comm.input ? comm.input : cond.value) + "'"));
-		$(row).append($('<td>').html((comm.move_dir) ? comm.move_dir : 'N'));
-		$(row).append($('<td>').html(comm.new_state ? comm.new_state : cond.state));
+		$(row).append($('<td>').html((comm.move_dir) ? ((comm.move_dir == 'R') ? 'R ->':'<- L' ) : 'N'));
+		$(row).append($('<td>').html("(" + (comm.new_state ? comm.new_state : cond.state) + ")"));
 		$(commands_el).find('tbody').append($(row));
 	}
 }
