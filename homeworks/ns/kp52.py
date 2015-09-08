@@ -1,40 +1,19 @@
 import csv
 import requests
 import json
-from urlparse import urlparse
-
+from urllib.parse import urlparse
+from github import GitHubApi
+from students import get_students
 
 def read_config(filename):
 	with open(filename, "r") as file:
 		config = json.load(file)
 	return config
 	
-config = read_config("/home/devincube/Documents/config.json")
-
-def read_students(filename):
-	students = []
-	with open(filename, "r") as csvfile:
-		reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-		for row in reader:
-			if not row[0]: continue;
-			student = {
-				'repo': row[7]
-			}
-			students.append(student)
-	return students
-
-def check_contents(user, repo, path):
-	id = config["oauth"]["client_id"]
-	secret = config["oauth"]["client_secret"]
-	url = "https://api.github.com/repos/{user}/{repo}/contents{path}?client_id={id}&client_secret={secret}".format(user=user,repo=repo,path=path,id=id,secret=secret)
-	print(url)
-	res = requests.get(url)
-	print(res.status_code)
-	if res.status_code == 200:
-		return True
-	if res.status_code == 403:
-		print("403 FORBIDDEN")
-	return False
+local_config = read_config("local_config.json")
+config = read_config(local_config["config"])
+oauth = config["oauth"]
+github = GitHubApi(oauth["client_id"], oauth["client_secret"])
 
 def check_hello_world(repo):
 	res = requests.get(repo)
@@ -53,17 +32,24 @@ def check_hello_world(repo):
 	if not ( check_contents(user, repo, "/courses/prog_base/tasks/hello_world/hello") or check_contents(user, repo, "/courses/prog_base/tasks/hello_world/hello.exe") ):
 		return 4;
 	return 0;
-
-if __name__ == "__main__":
 	
-	students = read_students("/home/devincube/Documents/students.csv")
-	students_iter = iter(students)
-	next(students_iter)
-	for st in students_iter:
+def check():
+	students = get_students("/home/devincube/Documents/students.csv")
+	for st in students:
 		repo = st["repo"]
 		if not repo: continue;
 	
 		status = check_hello_world(repo)
 		
 		print("{status} {repo}".format(repo=repo, status=status))
+
+if __name__ == "__main__":
+	
+	user = 'gribo4eg'
+	repo = 'repos1'
+	path = "/courses/prog_base/tasks/hello_world"
+	res = github.get_contents_request(user, repo, path)
+	print(res)
+	
+	
 
