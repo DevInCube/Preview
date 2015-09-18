@@ -262,7 +262,4 @@ if __name__ == "__main__":
 	tests = parse_tests('0,1;1,2;99,100;199,200;')	
 		
 	print(run_test_set(tur, tests))	
-	
-	
-	
-	
+
